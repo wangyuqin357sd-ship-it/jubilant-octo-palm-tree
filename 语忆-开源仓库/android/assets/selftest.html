@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>语忆 · APK 内置自检</title>
+<style>
+  :root { --ok:#0a7a2f; --bad:#c0001a; --warn:#9a6400; --ink:#101010; --dim:#555; }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:14px 14px 40px;
+    font: 17px/1.5 -apple-system, "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+    color:var(--ink); background:#fff;
+  }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:19px; margin:22px 0 8px; padding-top:10px; border-top:2px solid #ddd; }
+  .sub { color:var(--dim); font-size:14px; margin:0 0 10px; }
+  #verdict {
+    font-size:26px; font-weight:700; padding:14px; border-radius:10px;
+    text-align:center; margin:12px 0 6px; border:3px solid;
+  }
+  #verdict.pass { color:#fff; background:var(--ok); border-color:var(--ok); }
+  #verdict.fail { color:#fff; background:var(--bad); border-color:var(--bad); }
+  #verdict.run  { color:#333; background:#eee; border-color:#bbb; }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th, td { text-align:left; padding:7px 6px; border-bottom:1px solid #e2e2e2;
+           vertical-align:top; word-break:break-all; }
+  th { background:#f4f4f4; font-size:14px; color:#333; }
+  td.st { font-weight:700; white-space:nowrap; }
+  td.st.ok { color:var(--ok); } td.st.bad { color:var(--bad); } td.st.warn { color:var(--warn); }
+  td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size:14px; }
+  pre { background:#f7f7f7; border:1px solid #e0e0e0; border-radius:8px; padding:10px;
+        font-size:13px; white-space:pre-wrap; word-break:break-all; max-height:420px; overflow:auto; }
+  button { font-size:18px; padding:12px 18px; border-radius:10px; border:2px solid #444;
+           background:#fff; color:#111; margin:6px 6px 6px 0; }
+  .kv { font-size:15px; color:#222; }
+  .kv b { display:inline-block; min-width:132px; color:#444; font-weight:600; }
+</style>
+</head>
+<body>
+<h1>语忆 · APK 内置自检</h1>
+<p class="sub">不用控制台：在 WebView 里直接 fetch 内置资源，看 HTTP 状态、字节数、MIME 与「脚本是否真的执行」。</p>
+
+<div id="verdict" class="run">正在自检……</div>
+<button id="rerun" type="button">重新自检</button>
+
+<h2>1. 运行环境</h2>
+<div id="env" class="kv">…</div>
+
+<h2>2. 内置资源 HTTP 状态 / 字节数</h2>
+<p class="sub">这几条就是「导出文档」依赖的路径：<code>lib/*.js</code> 与 <code>data/braille-zh.json</code>。</p>
+<table>
+  <thead><tr><th>URL</th><th>状态</th><th>字节</th><th>Content-Type</th><th>内容校验</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<h2>3. 脚本真的执行了吗（MIME 是否可执行）</h2>
+<p class="sub">只 fetch 到字节还不够 —— MIME 给错时 <code>&lt;script&gt;</code> 会被拒绝执行。这里真的插标签。</p>
+<table>
+  <thead><tr><th>脚本</th><th>状态</th><th>结果</th></tr></thead>
+  <tbody id="execRows"></tbody>
+</table>
+
+<h2>4. 导出链路端到端</h2>
+<p class="sub">照着 <code>ensureExportLibs()</code> 的顺序走一遍：载库 → 读盲文表 → 生成 docx / 转盲文。</p>
+<table>
+  <thead><tr><th>步骤</th><th>状态</th><th>结果</th></tr></thead>
+  <tbody id="e2eRows"></tbody>
+</table>
+
+<h2>5. 原生桥 YuyiNative</h2>
+<div id="native" class="kv">…</div>
+<p class="sub">assets 伺服记录（拦截器的映射结果，最近 20 条）：</p>
+<pre id="assetLog">…</pre>
+
+<h2>6. 原始结果 JSON</h2>
+<pre id="raw">…</pre>
+
+<script>
+(function () {
+  "use strict";
+
+  var CASES = [
+    { url: "lib/docx-mini.js",       label: "lib/docx-mini.js",       needle: "DocxMini" },
+    { url: "lib/braille-zh.js",      label: "lib/braille-zh.js",      needle: "BrailleZH" },
+    { url: "data/braille-zh.json",   label: "data/braille-zh.json",   json: true },
+    { url: "index.html",             label: "index.html",             needle: "语忆", lenMin: 100000 },
+    { url: "/",                      label: "/  (根 → index.html)",   needle: "语忆" },
+    { url: "sw.js",                  label: "sw.js" },
+    { url: "data/asr/manifest.json", label: "data/asr/manifest.json", json: true },
+    { url: "lib/__no_such_file__.js", label: "lib/__no_such_file__.js", expect: 404 }
+  ];
+
+  var out = { at: new Date().toISOString(), origin: location.origin, rows: [],
+              exec: [], e2e: [], native: null, assetLog: null, verdict: "run" };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+    });
+  }
+  function cell(row, cls, text) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    td.innerHTML = text;
+    row.appendChild(td);
+    return td;
+  }
+  function addRow(tbody, cols) {
+    var tr = document.createElement("tr");
+    cols.forEach(function (c) { cell(tr, c[0], c[1]); });
+    tbody.appendChild(tr);
+    return tr;
+  }
+  function ok(st) { return st >= 200 && st < 300; }
+
+  /* ---------------- 1. 环境 ---------------- */
+  function renderEnv() {
+    var has = (typeof window.YuyiNative !== "undefined") && window.YuyiNative;
+    var rows = [
+      ["URL", location.href],
+      ["origin", location.origin],
+      ["安全上下文", String(!!window.isSecureContext)],
+      ["indexedDB", typeof indexedDB],
+      ["speechSynthesis", ("speechSynthesis" in window) ? "存在" : "不存在（WebView 的正常表现）"],
+      ["YuyiNative.speak", (has && typeof has.speak === "function") ? "有" : "无"],
+      ["YuyiNative.saveFile", (has && typeof has.saveFile === "function") ? "有" : "无"],
+      ["YuyiNative.stop", (has && typeof has.stop === "function") ? "有" : "无"],
+      ["YuyiNative.available", (has && typeof has.available === "function") ? "有" : "无"],
+      ["UA", navigator.userAgent]
+    ];
+    $("env").innerHTML = rows.map(function (r) {
+      return "<div><b>" + esc(r[0]) + "</b>" + esc(r[1]) + "</div>";
+    }).join("");
+  }
+
+  /* ---------------- 2. HTTP 状态 / 字节数 ---------------- */
+  function probe(c) {
+    var rec = { url: c.url, label: c.label };
+    return fetch(c.url, { cache: "no-store" }).then(function (r) {
+      rec.status = r.status;
+      rec.ctype = r.headers.get("content-type") || "(无)";
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      rec.bytes = buf.byteLength;
+      var u8 = new Uint8Array(buf);
+      rec.head = String.fromCharCode.apply(null, u8.subarray(0, 4));
+      if (c.json) {
+        try {
+          var txt = new TextDecoder("utf-8").decode(u8);
+          var obj = JSON.parse(txt);
+          rec.jsonOk = true;
+          rec.jsonKeys = Object.keys(obj).length;
+          rec.jsonRoot = Array.isArray(obj) ? ("array[" + obj.length + "]") : typeof obj;
+        } catch (e) { rec.jsonOk = false; rec.jsonErr = String(e && e.message || e); }
+      }
+      if (c.needle) {
+        var t = new TextDecoder("utf-8").decode(u8);
+        rec.needle = c.needle;
+        rec.needleFound = t.indexOf(c.needle) >= 0;
+      }
+      if (c.lenMin) rec.lenOk = rec.bytes >= c.lenMin;
+      return rec;
+    }).catch(function (e) {
+      rec.error = String(e && e.message || e);
+      return rec;
+    });
+  }
+
+  function verdictOf(rec, c) {
+    if (rec.error) return ["bad", "请求失败"];
+    if (c.expect) return (rec.status === c.expect) ? ["ok", "符合预期"] : ["bad", "期望 " + c.expect];
+    if (!ok(rec.status)) return ["bad", "HTTP " + rec.status];
+    if (rec.bytes <= 0) return ["bad", "0 字节"];
+    if (rec.json && rec.jsonOk === false) return ["bad", "JSON 解析失败"];
+    if (rec.needle && rec.needleFound === false) return ["bad", "内容里没有 " + rec.needle];
+    if (rec.lenOk === false) return ["warn", "字节偏小"];
+    return ["ok", "OK"];
+  }
+
+  function renderRows() {
+    var tb = $("rows");
+    tb.innerHTML = "";
+    out.rows.forEach(function (r, i) {
+      var c = CASES[i];
+      var v = verdictOf(r, c);
+      var detail = [];
+      if (r.json) detail.push(r.jsonOk ? ("JSON 可解析，顶层 " + r.jsonRoot + "，键 " + r.jsonKeys)
+                                       : ("解析失败：" + r.jsonErr));
+      if (r.needle) detail.push(r.needleFound ? ("含 \"" + r.needle + "\"") : ("不含 \"" + r.needle + "\""));
+      if (r.lenOk === false) detail.push("长度 < " + c.lenMin);
+      if (r.head) detail.push("魔数 " + JSON.stringify(r.head));
+      if (r.error) detail.push(r.error);
+      addRow(tb, [
+        [null, esc(r.label)],
+        ["st " + v[0], (r.status == null ? "—" : r.status) + "<br>" + esc(v[1])],
+        ["num", r.bytes == null ? "—" : r.bytes.toLocaleString()],
+        [null, "<code>" + esc(r.ctype) + "</code>"],
+        [null, esc(detail.join(" · ") || "—")]
+      ]);
+    });
+  }
+
+  /* ---------------- 3. 脚本执行（MIME 可执行性） ---------------- */
+  function injectScript(src) {
+    return new Promise(function (res) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.onload = function () { res({ src: src, loaded: true }); };
+      s.onerror = function () { res({ src: src, loaded: false }); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function runExec() {
+    return injectScript("lib/docx-mini.js").then(function (a) {
+      a.global = typeof window.DocxMini;
+      a.ok = a.loaded && typeof window.DocxMini === "object";
+      out.exec.push(a);
+      return injectScript("lib/braille-zh.js");
+    }).then(function (b) {
+      b.global = typeof window.BrailleZH;
+      b.ok = b.loaded && typeof window.BrailleZH === "object";
+      out.exec.push(b);
+      var tb = $("execRows");
+      tb.innerHTML = "";
+      out.exec.forEach(function (e) {
+        addRow(tb, [
+          [null, "<code>" + esc(e.src) + "</code>"],
+          ["st " + (e.ok ? "ok" : "bad"), e.ok ? "执行成功" : "失败"],
+          [null, e.loaded ? ("onload 触发，全局对象 " + esc(e.global) +
+                             (e.ok ? "（MIME 可执行 ✓）" : "（对象没挂上）"))
+                          : "onerror —— 脚本被拒绝执行（MIME 多半不对）"]
+        ]);
+      });
+    });
+  }
+
+  /* ---------------- 4. 导出链路端到端 ---------------- */
+  function e2e() {
+    var tb = $("e2eRows");
+    tb.innerHTML = "";
+    function push(name, good, detail) {
+      var rec = { step: name, ok: !!good, detail: String(detail) };
+      out.e2e.push(rec);
+      addRow(tb, [
+        [null, esc(name)],
+        ["st " + (good ? "ok" : "bad"), good ? "PASS" : "FAIL"],
+        [null, esc(detail)]
+      ]);
+      return rec;
+    }
+
+    var chain = Promise.resolve();
+    var docxBytes = null;
+
+    /* 4.1 盲文表：BrailleZH.load("data/braille-zh.json") —— 与页面完全同一条路 */
+    chain = chain.then(function () {
+      if (!window.BrailleZH || !window.BrailleZH.load) {
+        push("BrailleZH.load(data/braille-zh.json)", false, "BrailleZH 未就绪");
+        return null;
+      }
+      return window.BrailleZH.load("data/braille-zh.json").then(function () {
+        var info = null;
+        try { info = window.BrailleZH.tableInfo && window.BrailleZH.tableInfo(); } catch (e) {}
+        var ready = false;
+        try { ready = !!(window.BrailleZH.ready && window.BrailleZH.ready()); } catch (e) {}
+        push("BrailleZH.load(data/braille-zh.json)", ready,
+             "ready=" + ready + " tableInfo=" + JSON.stringify(info));
+        return null;
+      }).catch(function (e) {
+        push("BrailleZH.load(data/braille-zh.json)", false, "抛错: " + (e && e.message || e));
+        return null;
+      });
+    });
+
+    /* 4.2 真的转一次盲文 */
+    chain = chain.then(function () {
+      try {
+        var b = window.BrailleZH.toBrailleText("语忆自检 你好世界 123", {});
+        var s = (typeof b === "string") ? b : JSON.stringify(b);
+        push("BrailleZH.toBrailleText('语忆自检 你好世界 123')", s.length > 0,
+             s.slice(0, 80) + "（" + s.length + " 字符）");
+      } catch (e) {
+        push("BrailleZH.toBrailleText(...)", false, "抛错: " + (e && e.message || e));
+      }
+      return null;
+    });
+
+    /* 4.3 真的生成一个 docx（bytes 路径，不需要 Blob 下载） */
+    chain = chain.then(function () {
+      if (!window.DocxMini || !window.DocxMini.buildBytes) {
+        push("DocxMini.buildBytes([...])", false, "DocxMini 未就绪");
+        return null;
+      }
+      return window.DocxMini.buildBytes(["语忆自检", "第二段：导出链路测试"], { title: "自检文档" })
+        .then(function (bytes) {
+          var n = bytes && (bytes.length || bytes.byteLength) || 0;
+          var sig = "";
+          try { sig = String.fromCharCode(bytes[0], bytes[1]); } catch (e) {}
+          push("DocxMini.buildBytes([...])", n > 0 && sig === "PK",
+               n + " 字节，魔数=" + JSON.stringify(sig) + "（docx 是 ZIP，应为 PK）");
+          out.docxBytes = n;
+          docxBytes = bytes;
+          return null;
+        }).catch(function (e) {
+          push("DocxMini.buildBytes([...])", false, "抛错: " + (e && e.message || e));
+          return null;
+        });
+    });
+
+    /* 4.4 把真的 docx 交给原生桥落盘 —— 这条就是「导出中文 Word 文档」的最后一跳 */
+    chain = chain.then(function () {
+      var has = window.YuyiNative && typeof window.YuyiNative.saveFile === "function";
+      if (!has) { push("saveFile(真 docx)", false, "桥不存在"); return null; }
+      if (!docxBytes) { push("saveFile(真 docx)", false, "上一步没产出 docx 字节"); return null; }
+      try {
+        var bin = "";
+        for (var i = 0; i < docxBytes.length; i++) bin += String.fromCharCode(docxBytes[i]);
+        var where = window.YuyiNative.saveFile(
+          "yuyi-selftest.docx", btoa(bin),
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        push("saveFile('yuyi-selftest.docx', 真 docx)", !!where,
+             docxBytes.length + " 字节 -> " + where);
+      } catch (e) {
+        push("saveFile('yuyi-selftest.docx', 真 docx)", false, "抛错: " + (e && e.message || e));
+      }
+      return null;
+    });
+
+    /* 4.5 原生落盘：saveFile —— 导出最后一步真正用的桥 */
+    chain = chain.then(function () {
+      var has = window.YuyiNative && typeof window.YuyiNative.saveFile === "function";
+      if (!has) { push("YuyiNative.saveFile(...)", false, "桥不存在"); return null; }
+      try {
+        var txt = "语忆自检 selftest " + new Date().toISOString() + "\n";
+        var b64 = btoa(unescape(encodeURIComponent(txt)));
+        var where = window.YuyiNative.saveFile("yuyi-selftest.txt", b64, "text/plain");
+        push("YuyiNative.saveFile('yuyi-selftest.txt', …)", !!where, "落点: " + where);
+      } catch (e) {
+        push("YuyiNative.saveFile(...)", false, "抛错: " + (e && e.message || e));
+      }
+      return null;
+    });
+
+    return chain;
+  }
+
+  /* ---------------- 5. 原生桥 ---------------- */
+  function renderNative() {
+    var n = { present: !!(window.YuyiNative && typeof window.YuyiNative === "object") };
+    if (n.present) {
+      try { n.speak = typeof window.YuyiNative.speak; } catch (e) {}
+      try { n.stop = typeof window.YuyiNative.stop; } catch (e) {}
+      try { n.saveFile = typeof window.YuyiNative.saveFile; } catch (e) {}
+      try { n.available = window.YuyiNative.available(); } catch (e) { n.availableErr = String(e); }
+      try { n.status = JSON.parse(window.YuyiNative.status()); } catch (e) { n.statusErr = String(e); }
+      try { n.assetLog = JSON.parse(window.YuyiNative.assetLog(20)); } catch (e) { n.assetLogErr = String(e); }
+    }
+    out.native = n;
+    var rows = [
+      ["桥对象", n.present ? "存在" : "不存在"],
+      ["speak", String(n.speak)],
+      ["stop", String(n.stop)],
+      ["saveFile", String(n.saveFile)],
+      ["available()", String(n.available)],
+      ["引擎 engine", n.status ? n.status.engine : "—"],
+      ["initStatus", n.status ? n.status.initStatus + "（0=SUCCESS）" : "—"],
+      ["setLanguage", n.status ? (n.status.langResult + " " + n.status.langLabel) : "—"],
+      ["langOk", n.status ? String(n.status.langOk) : "—"],
+      ["speakCalls / ok", n.status ? (n.status.speakCalls + " / " + n.status.speakOkCalls) : "—"],
+      ["lastSpeakRet", n.status ? (n.status.lastSpeakRet + "（0=SUCCESS）") : "—"],
+      ["TTS 事件计数", n.status ? String(n.status.events) : "—"],
+      ["最后事件", n.status ? n.status.lastEvent : "—"],
+      ["最后错误", n.status ? n.status.lastError : "—"]
+    ];
+    $("native").innerHTML = rows.map(function (r) {
+      return "<div><b>" + esc(r[0]) + "</b>" + esc(r[1]) + "</div>";
+    }).join("");
+    $("assetLog").textContent = n.assetLog
+      ? JSON.stringify(n.assetLog, null, 1)
+      : ("读取失败: " + (n.assetLogErr || "—"));
+  }
+
+  /* ---------------- 汇总 ---------------- */
+  function finish() {
+    var bad = 0, total = 0;
+    out.rows.forEach(function (r, i) {
+      total++;
+      if (verdictOf(r, CASES[i])[0] === "bad") bad++;
+    });
+    out.exec.forEach(function (e) { total++; if (!e.ok) bad++; });
+    out.e2e.forEach(function (e) { total++; if (!e.ok) bad++; });
+    if (out.native && !out.native.present) { total++; bad++; }
+    out.verdict = bad === 0 ? "pass" : "fail";
+    var v = $("verdict");
+    v.className = out.verdict;
+    v.textContent = bad === 0
+      ? ("全部通过（" + total + " 项）")
+      : (bad + " / " + total + " 项失败 —— 见下方红字");
+    out.finishedAt = new Date().toISOString();
+    window.__selftest = out;
+    $("raw").textContent = JSON.stringify(out, null, 1);
+  }
+
+  function run() {
+    out = { at: new Date().toISOString(), origin: location.origin, rows: [],
+            exec: [], e2e: [], native: null, assetLog: null, verdict: "run" };
+    window.__selftest = out;
+    $("verdict").className = "run";
+    $("verdict").textContent = "正在自检……";
+    $("raw").textContent = "…";
+    renderEnv();
+    $("rows").innerHTML = "";
+    $("execRows").innerHTML = "";
+    $("e2eRows").innerHTML = "";
+
+    var seq = Promise.resolve();
+    CASES.forEach(function (c) {
+      seq = seq.then(function () { return probe(c); }).then(function (rec) {
+        out.rows.push(rec);
+        renderRows();
+        return null;
+      });
+    });
+    seq.then(runExec).then(e2e).then(function () {
+      renderNative();
+      finish();
+    }).catch(function (e) {
+      $("verdict").className = "fail";
+      $("verdict").textContent = "自检自身抛错：" + (e && e.message || e);
+      window.__selftest = out;
+      out.fatal = String(e && e.stack || e);
+      $("raw").textContent = JSON.stringify(out, null, 1);
+    });
+  }
+
+  document.getElementById("rerun").addEventListener("click", run);
+  run();
+})();
+</script>
+</body>
+</html>

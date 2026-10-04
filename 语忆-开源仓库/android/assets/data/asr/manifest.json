@@ -1,0 +1,23 @@
+{
+  "schema": "yuyi-asr-wasm/1",
+  "engine": {
+    "name": "vosk-browser",
+    "version": "0.0.8",
+    "license": "Apache-2.0",
+    "file": "vosk.js",
+    "bytes": 5804767,
+    "sha256": "29504515526e974f4cb053cf08811c4de5fb2a74007c0a5a957db50eaa8d5d0c",
+    "note": "UMD 单文件：libvosk 的 WASM 以 base64 data-URI 内嵌，Web Worker 也以 base64 内嵌；不需要额外 .wasm / worker 文件。"
+  },
+  "model": {
+    "name": "vosk-model-small-cn-0.22",
+    "file": "model.tar.gz",
+    "bytes": 43890403,
+    "sha256": "2df488f7ee30b31adbcebd8351bf31cad19bf8b326f31a73637a3b4670faaee2",
+    "raw_bytes": 68292271,
+    "raw_files": 14,
+    "layout": "tar.gz，单个顶层目录，vosk-browser 以 stripFirstComponent=true 解包"
+  },
+  "total_bytes": 49695170,
+  "generated_at": "2026-10-04T06:54:55+0800"
+}

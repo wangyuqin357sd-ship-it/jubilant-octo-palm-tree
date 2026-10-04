@@ -1,0 +1,2807 @@
+{
+  "title": "语忆",
+  "brief": "面向盲人和低视力用户的语音记录应用。按下录音或说“小语”，把课堂原声先保存成音频，再决定是否交给 AI 转写；右侧常驻工具栏提供笔记、待办、目录、导出盲文 BRF。",
+  "frame": "phone",
+  "platform": "web",
+  "paletteKey": "custom",
+  "customPalette": {
+    "key": "custom",
+    "label": "语忆墨绿",
+    "seed": "#2A4A40",
+    "primary": "#2A4A40",
+    "onPrimary": "#FFFFFF",
+    "primaryContainer": "#C2DFD7",
+    "onPrimaryContainer": "#0A1F19",
+    "inversePrimary": "#8FBDB0",
+    "secondary": "#F07C1E",
+    "secondaryContainer": "#FFF3E7",
+    "onSecondaryContainer": "#8A4A0E",
+    "tertiaryContainer": "#FFF3E7",
+    "onTertiaryContainer": "#8A4A0E",
+    "surface": "#FFFFFF",
+    "surfaceContainerLow": "#FBFAF7",
+    "surfaceContainer": "#F7F5EF",
+    "surfaceContainerHigh": "#F2EFE7",
+    "surfaceContainerHighest": "#ECE8DE",
+    "onSurface": "#111111",
+    "onSurfaceVariant": "#777777",
+    "outline": "#8A8A8A",
+    "outlineVariant": "#E3DFD5",
+    "inverseSurface": "#2B3230",
+    "inverseOnSurface": "#F2F5F3",
+    "error": "#B3261E",
+    "onError": "#FFFFFF",
+    "errorContainer": "#FCEDEB",
+    "onErrorContainer": "#410E0B"
+  },
+  "theme": {
+    "dark": false,
+    "bothModes": false,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "system",
+    "emphasized": false,
+    "motion": "standard"
+  },
+  "frames": [
+    {
+      "id": "home",
+      "name": "首页·待机",
+      "x": 0,
+      "y": 0,
+      "w": 430,
+      "h": 932,
+      "note": "默认真实页面。内容在 Header 与 Tab 之间滚动；截图展示首屏。",
+      "place": "top"
+    },
+    {
+      "id": "recording",
+      "name": "录音中",
+      "x": 510,
+      "y": 0,
+      "w": 430,
+      "h": 932,
+      "note": "点击录音后进入。卡片内出现计时与“录音中”，按钮变暂停；只有录音状态响应“小语，结束”。",
+      "place": "top"
+    },
+    {
+      "id": "paused",
+      "name": "录音暂停",
+      "x": 1020,
+      "y": 0,
+      "w": 430,
+      "h": 932,
+      "note": "暂停是纯 UI 状态，没有对应语音指令；原声继续保留。",
+      "place": "top"
+    },
+    {
+      "id": "assistant",
+      "name": "小语助手浮层",
+      "x": 1530,
+      "y": 0,
+      "w": 430,
+      "h": 932,
+      "note": "最高层级浮层。呼叫按钮或说“小语 / 你好，小语”唤起，先播报欢迎话术，只处理预设指令。",
+      "place": "top"
+    },
+    {
+      "id": "me",
+      "name": "我的",
+      "x": 2040,
+      "y": 0,
+      "w": 430,
+      "h": 932,
+      "note": "底部 Tab 的“我的”。设置项都是大触控目标；列表在 Tab 之上滚动。",
+      "place": "top"
+    },
+    {
+      "id": "confirm",
+      "name": "确认弹窗·录音转写",
+      "x": 0,
+      "y": 1032,
+      "w": 430,
+      "h": 932,
+      "note": "录音结束保存后弹出，复述待确认内容；确认 / 暂不处理 / 取消三选一，取消后原声仍在。",
+      "place": "top"
+    },
+    {
+      "id": "audio",
+      "name": "原音频面板",
+      "x": 510,
+      "y": 1032,
+      "w": 430,
+      "h": 932,
+      "note": "目录页点“原音频”进入。存放每次录音的原始音频：播放/暂停、重命名、删除、导出，也能跳到对应的 AI 总结。",
+      "place": "top"
+    },
+    {
+      "id": "notes",
+      "name": "AI 总结笔记",
+      "x": 1020,
+      "y": 1032,
+      "w": 430,
+      "h": 932,
+      "note": "全是 AI 从原音频总结提炼的内容（要点 / 摘要 / 标签），每条标着来源原音频；原文永不被改写。",
+      "place": "top"
+    },
+    {
+      "id": "todos",
+      "name": "待办面板",
+      "x": 1530,
+      "y": 1032,
+      "w": 430,
+      "h": 932,
+      "note": "新增、查看、标记完成、删除。安卓端支持真实振动提醒：到点由手机马达按三段式节奏振动，并配合常驻系统通知与语音播报；振动需要页面在浏览器中保持运行。",
+      "place": "top"
+    },
+    {
+      "id": "exports",
+      "name": "导出记录",
+      "x": 2040,
+      "y": 1032,
+      "w": 430,
+      "h": 932,
+      "note": "历史 BRF 导出：时间、条目、文件名、盲文级别、体积；可重新下载、全部导出、清空记录（需确认）。",
+      "place": "top"
+    },
+    {
+      "id": "help",
+      "name": "帮助与语音指令",
+      "x": 0,
+      "y": 2064,
+      "w": 430,
+      "h": 932,
+      "note": "唤醒词、可用指令、禁用项。也是说“小语，帮助”时的完整清单。",
+      "place": "top"
+    },
+    {
+      "id": "catalog",
+      "name": "目录面板（内容入口）",
+      "x": 510,
+      "y": 2064,
+      "w": 430,
+      "h": 932,
+      "note": "顶部“原音频”和“AI 总结笔记”两个主按钮分别打开对应面板；下面按目录组浏览记录条目。",
+      "place": "top"
+    },
+    {
+      "id": "export",
+      "name": "导出盲文确认",
+      "x": 1020,
+      "y": 2064,
+      "w": 430,
+      "h": 932,
+      "note": "导出前先确认：用原始内容生成中文盲文 BRF，原文不会改变；AI 摘要与标签不会写进盲文文件。",
+      "place": "top"
+    },
+    {
+      "id": "saved",
+      "name": "录音已保存",
+      "x": 1530,
+      "y": 2064,
+      "w": 430,
+      "h": 932,
+      "note": "说完“小语，结束”后立刻出现：确认原声已落盘，并给出三个去向——转文字 / 回放 / 先放着。",
+      "place": "top"
+    },
+    {
+      "id": "brand",
+      "name": "色板·层级·语音指令",
+      "x": 2040,
+      "y": 2064,
+      "w": 430,
+      "h": 932,
+      "note": "给前端实现的对照页：颜色令牌、z-index 层级、语音指令、字号圆角、无障碍清单。",
+      "place": "top"
+    },
+    {
+      "id": "remind",
+      "name": "提醒触发",
+      "x": 0,
+      "y": 3096,
+      "w": 430,
+      "h": 932,
+      "note": "待办到点触发的整屏提醒：#remindDlg 是 role=alertdialog 的浮层（与 #helpPanel 同级、在面板之上、Toast 之下，渲染时带 .scrim 遮罩）。先三段式振动，同刻发常驻系统通知，第一组振动结束后语音播报全文。",
+      "place": "top"
+    }
+  ],
+  "groups": [
+    {
+      "id": "home-bar",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "home-appbar",
+          "kind": "topAppBar",
+          "label": "语忆",
+          "icon": null,
+          "variant": "filled",
+          "icon2": "more_vert",
+          "supporting": "声音里的第二个大脑",
+          "actions": {
+            "icon2": {
+              "to": "confirm",
+              "transition": "fade"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-text",
+      "x": 0,
+      "y": 132,
+      "axis": "y",
+      "items": [
+        {
+          "id": "home-date",
+          "kind": "text",
+          "label": "今日 · 10月4日 星期日",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "textColor": "onSurfaceVariant"
+        },
+        {
+          "id": "home-title",
+          "kind": "text",
+          "label": "今天，想记录点什么？",
+          "icon": null,
+          "variant": "text",
+          "size": 27,
+          "bold": true
+        },
+        {
+          "id": "home-sub",
+          "kind": "text",
+          "label": "按下录音，或者直接说“小语，开始录音”",
+          "icon": null,
+          "variant": "text",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "home-wake",
+      "x": 0,
+      "y": 274,
+      "axis": "x",
+      "items": [
+        {
+          "id": "home-wake-chip",
+          "kind": "chip",
+          "label": "小语正在待机监听",
+          "icon": "graphic_eq",
+          "variant": "tonal",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "home-card",
+      "x": 0,
+      "y": 330,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-card",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 398,
+          "size2": 150,
+          "fill": "surfaceContainer",
+          "radiusTop": 28,
+          "radiusBottom": 28,
+          "note": "课堂原声记录卡片。录音按钮是唯一支持暂停/继续的入口。"
+        }
+      ]
+    },
+    {
+      "id": "home-card-label",
+      "x": 154,
+      "y": 338,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-card-label",
+          "kind": "text",
+          "label": "课堂原声记录",
+          "icon": null,
+          "variant": "text",
+          "size": 12
+        }
+      ]
+    },
+    {
+      "id": "home-record-btn",
+      "x": 153,
+      "y": 374,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-btn",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 92,
+          "size2": 92,
+          "fill": "primary",
+          "radiusTop": 46,
+          "radiusBottom": 46,
+          "note": "深墨绿圆形录音主按钮（内置白色麦克风与“开始录音”）。点击进入录音状态并本地播报提示。",
+          "action": {
+            "to": "recording",
+            "transition": "expand"
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-record-label",
+      "x": 166,
+      "y": 436,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-inner-txt",
+          "kind": "text",
+          "label": "开始录音",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "bold": true,
+          "note": "按钮内文字，与麦克风图标一起构成按钮内容。"
+        }
+      ]
+    },
+    {
+      "id": "home-card-hint",
+      "x": 28,
+      "y": 502,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-hint",
+          "kind": "text",
+          "label": "准备好了，原声会先保存，再决定是否转写。",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "home-card-div",
+      "x": 0,
+      "y": 550,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-div",
+          "kind": "divider",
+          "label": "",
+          "icon": null,
+          "variant": "text",
+          "size": 398
+        }
+      ]
+    },
+    {
+      "id": "home-card-foot",
+      "x": 84,
+      "y": 582,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-foot",
+          "kind": "text",
+          "label": "录音中可以说：“小语，结束”",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "home-call",
+      "x": 0,
+      "y": 650,
+      "axis": "x",
+      "items": [
+        {
+          "id": "call-field",
+          "kind": "textField",
+          "label": "想让小语帮你做点什么？",
+          "icon": "diamond",
+          "variant": "outlined",
+          "size": 278,
+          "supporting": "说“小语”，开始笔记、搜索、提醒或导出"
+        },
+        {
+          "id": "call-btn",
+          "kind": "button",
+          "label": "呼叫",
+          "icon": "mic",
+          "variant": "filled",
+          "size": 104,
+          "action": {
+            "to": "assistant",
+            "transition": "slideUp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-side",
+      "x": 354,
+      "y": 300,
+      "axis": "y",
+      "items": [
+        {
+          "id": "side-note",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "auto_awesome",
+          "variant": "tonal",
+          "action": {
+            "to": "notes",
+            "transition": "slideLeft"
+          }
+        },
+        {
+          "id": "side-todo",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "checklist",
+          "variant": "tonal",
+          "action": {
+            "to": "todos",
+            "transition": "slideLeft"
+          }
+        },
+        {
+          "id": "side-dir",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "folder_open",
+          "variant": "tonal",
+          "action": {
+            "to": "catalog",
+            "transition": "slideLeft"
+          }
+        },
+        {
+          "id": "side-export",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "download",
+          "variant": "tonal",
+          "action": {
+            "to": "export",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-nav",
+      "x": -16,
+      "y": 828,
+      "axis": "x",
+      "items": [
+        {
+          "id": "home-nav-bar",
+          "kind": "bottomNav",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "icon": "home",
+              "label": "首页"
+            },
+            {
+              "icon": "description",
+              "label": "笔记"
+            },
+            {
+              "icon": "graphic_eq",
+              "label": "AI"
+            },
+            {
+              "icon": "person",
+              "label": "我的"
+            },
+            {
+              "icon": "mic",
+              "label": "原音频"
+            }
+          ],
+          "selected": 0,
+          "actions": {
+            "tab:0": {
+              "to": "home",
+              "transition": "none"
+            },
+            "tab:1": {
+              "to": "notes",
+              "transition": "slideUp"
+            },
+            "tab:2": {
+              "to": "assistant",
+              "transition": "slideUp"
+            },
+            "tab:3": {
+              "to": "me",
+              "transition": "fade"
+            },
+            "tab:4": {
+              "to": "audio",
+              "transition": "slideUp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rec-bar",
+      "x": 510,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-appbar",
+          "kind": "topAppBar",
+          "label": "语忆",
+          "icon": null,
+          "variant": "filled",
+          "icon2": "more_vert",
+          "supporting": "声音里的第二个大脑"
+        }
+      ]
+    },
+    {
+      "id": "rec-chips",
+      "x": 510,
+      "y": 128,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-state",
+          "kind": "chip",
+          "label": "录音中 00:12",
+          "icon": "graphic_eq",
+          "variant": "filled",
+          "size": 140
+        },
+        {
+          "id": "rec-end",
+          "kind": "chip",
+          "label": "说“小语，结束”",
+          "icon": "mic_off",
+          "variant": "outlined",
+          "size": 182
+        }
+      ]
+    },
+    {
+      "id": "rec-hint2",
+      "x": 510,
+      "y": 176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-helper",
+          "kind": "text",
+          "label": "暂停 / 继续只能用卡片上的按钮",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "rec-card-box",
+      "x": 510,
+      "y": 200,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-card2",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 398,
+          "size2": 170,
+          "fill": "surfaceContainer",
+          "radiusTop": 28,
+          "radiusBottom": 28
+        }
+      ]
+    },
+    {
+      "id": "rec-card-lb",
+      "x": 664,
+      "y": 228,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-label2",
+          "kind": "text",
+          "label": "课堂原声记录",
+          "icon": null,
+          "variant": "text",
+          "size": 12
+        }
+      ]
+    },
+    {
+      "id": "rec-btn-box",
+      "x": 663,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-btn2",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 92,
+          "size2": 92,
+          "fill": "primary",
+          "radiusTop": 46,
+          "radiusBottom": 46,
+          "note": "录音中的按钮：文字变“暂停录音”，外圈脉冲动画。",
+          "action": {
+            "to": "paused",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rec-txt2",
+      "x": 676,
+      "y": 326,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-inner-txt2",
+          "kind": "text",
+          "label": "暂停录音",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "rec-tip2",
+      "x": 542,
+      "y": 392,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-tip-box",
+          "kind": "text",
+          "label": "正在记录原声，先保存音频，再决定是否转写。",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "rec-nav",
+      "x": 482,
+      "y": 828,
+      "axis": "x",
+      "items": [
+        {
+          "id": "rec-nav-bar",
+          "kind": "bottomNav",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "icon": "home",
+              "label": "首页"
+            },
+            {
+              "icon": "description",
+              "label": "笔记"
+            },
+            {
+              "icon": "graphic_eq",
+              "label": "AI"
+            },
+            {
+              "icon": "person",
+              "label": "我的"
+            },
+            {
+              "icon": "mic",
+              "label": "原音频"
+            }
+          ],
+          "selected": 0,
+          "actions": {
+            "tab:0": {
+              "to": "home",
+              "transition": "none"
+            },
+            "tab:1": {
+              "to": "notes",
+              "transition": "slideUp"
+            },
+            "tab:2": {
+              "to": "assistant",
+              "transition": "slideUp"
+            },
+            "tab:3": {
+              "to": "me",
+              "transition": "fade"
+            },
+            "tab:4": {
+              "to": "audio",
+              "transition": "slideUp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pause-bar",
+      "x": 1020,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-appbar",
+          "kind": "topAppBar",
+          "label": "语忆",
+          "icon": null,
+          "variant": "filled",
+          "icon2": "more_vert",
+          "supporting": "声音里的第二个大脑"
+        }
+      ]
+    },
+    {
+      "id": "pause-chips",
+      "x": 1020,
+      "y": 128,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-state",
+          "kind": "chip",
+          "label": "已暂停 00:12",
+          "icon": "pause_circle",
+          "variant": "tonal",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "pause-card",
+      "x": 1020,
+      "y": 200,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-card-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 398,
+          "size2": 170,
+          "fill": "surfaceContainerHigh",
+          "radiusTop": 28,
+          "radiusBottom": 28
+        }
+      ]
+    },
+    {
+      "id": "pause-lb",
+      "x": 1174,
+      "y": 228,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-label",
+          "kind": "text",
+          "label": "课堂原声记录",
+          "icon": null,
+          "variant": "text",
+          "size": 12
+        }
+      ]
+    },
+    {
+      "id": "pause-btn",
+      "x": 1173,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-btn-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 92,
+          "size2": 92,
+          "fill": "surfaceContainerHighest",
+          "radiusTop": 46,
+          "radiusBottom": 46,
+          "note": "暂停态：浅灰按钮 + 播放图标，点击继续。",
+          "action": {
+            "to": "recording",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pause-txt",
+      "x": 1186,
+      "y": 326,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-inner-txt",
+          "kind": "text",
+          "label": "继续录音",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "pause-hint",
+      "x": 1052,
+      "y": 392,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-hint-txt",
+          "kind": "text",
+          "label": "录音已暂停，原声仍然保留，点一下继续。",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "pause-nav",
+      "x": 980,
+      "y": 828,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pause-nav-bar",
+          "kind": "bottomNav",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "icon": "home",
+              "label": "首页"
+            },
+            {
+              "icon": "description",
+              "label": "笔记"
+            },
+            {
+              "icon": "graphic_eq",
+              "label": "AI"
+            },
+            {
+              "icon": "person",
+              "label": "我的"
+            },
+            {
+              "icon": "mic",
+              "label": "原音频"
+            }
+          ],
+          "selected": 0,
+          "actions": {
+            "tab:0": {
+              "to": "home",
+              "transition": "none"
+            },
+            "tab:1": {
+              "to": "notes",
+              "transition": "slideUp"
+            },
+            "tab:2": {
+              "to": "assistant",
+              "transition": "slideUp"
+            },
+            "tab:3": {
+              "to": "me",
+              "transition": "fade"
+            },
+            "tab:4": {
+              "to": "audio",
+              "transition": "slideUp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "asst-sheet",
+      "x": 1530,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 632,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "asst-head",
+      "x": 1530,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-bar",
+          "kind": "topAppBar",
+          "label": "小语",
+          "icon": "graphic_eq",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "正在倾听 · 只处理预设指令",
+          "actions": {
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "asst-body",
+      "x": 1546,
+      "y": 128,
+      "axis": "y",
+      "items": [
+        {
+          "id": "asst-welcome",
+          "kind": "text",
+          "label": "您好，我是小语。请告诉我需要做什么。你可以说打开原音频、听 AI 总结、设置提醒、打开目录或导出盲文。",
+          "icon": null,
+          "variant": "text",
+          "size": 15
+        },
+        {
+          "id": "asst-lowsig",
+          "kind": "text",
+          "label": "听不懂时我不会猜，会请你换一种说法。",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "asst-chips1",
+      "x": 1546,
+      "y": 212,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-help",
+          "kind": "chip",
+          "label": "小语，帮助",
+          "icon": "help",
+          "variant": "outlined"
+        },
+        {
+          "id": "asst-c-repeat",
+          "kind": "chip",
+          "label": "小语，重复",
+          "icon": "replay",
+          "variant": "outlined"
+        },
+        {
+          "id": "asst-c-back",
+          "kind": "chip",
+          "label": "小语，返回",
+          "icon": "arrow_back",
+          "variant": "outlined"
+        }
+      ]
+    },
+    {
+      "id": "asst-chips2",
+      "x": 1546,
+      "y": 260,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-cancel",
+          "kind": "chip",
+          "label": "小语，取消",
+          "icon": "cancel",
+          "variant": "outlined",
+          "size": 168
+        },
+        {
+          "id": "asst-c-exit",
+          "kind": "chip",
+          "label": "小语，退出",
+          "icon": "logout",
+          "variant": "outlined",
+          "size": 168
+        },
+        {
+          "id": "asst-c-end",
+          "kind": "chip",
+          "label": "小语，结束",
+          "icon": "mic",
+          "variant": "outlined",
+          "size": 168,
+          "note": "只在录音状态生效；助手待机时不触发退出。"
+        }
+      ]
+    },
+    {
+      "id": "asst-chips3",
+      "x": 1546,
+      "y": 308,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-audio",
+          "kind": "chip",
+          "label": "原音频",
+          "icon": "graphic_eq",
+          "variant": "tonal",
+          "action": {
+            "to": "audio",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "asst-c-note",
+          "kind": "chip",
+          "label": "AI 总结",
+          "icon": "auto_awesome",
+          "variant": "tonal",
+          "action": {
+            "to": "notes",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "asst-c-sum",
+          "kind": "chip",
+          "label": "重新总结",
+          "icon": "refresh",
+          "variant": "tonal"
+        }
+      ]
+    },
+    {
+      "id": "asst-chips4",
+      "x": 1546,
+      "y": 356,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-todo",
+          "kind": "chip",
+          "label": "提醒我……",
+          "icon": "checklist",
+          "variant": "tonal",
+          "action": {
+            "to": "todos",
+            "transition": "slideUp"
+          },
+          "note": "进入 todoStart 五步录入：内容 → 确认 → 时间 → 方式 → 最终确认，存成震动提醒待办。"
+        },
+        {
+          "id": "asst-c-dir",
+          "kind": "chip",
+          "label": "打开目录",
+          "icon": "folder_open",
+          "variant": "tonal",
+          "action": {
+            "to": "catalog",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "asst-c-export",
+          "kind": "chip",
+          "label": "导出盲文",
+          "icon": "download",
+          "variant": "tonal",
+          "action": {
+            "to": "export",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "asst-chips6",
+      "x": 1546,
+      "y": 404,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-ack",
+          "kind": "chip",
+          "label": "知道了",
+          "icon": "check",
+          "variant": "tonal",
+          "size": 150,
+          "action": {
+            "to": "home",
+            "transition": "slideUp"
+          },
+          "note": "data-cmd=todoAck。停振、停播报、标记已提醒、关通知、回待机；与提醒弹窗里的「知道了」等效。"
+        },
+        {
+          "id": "asst-c-snooze",
+          "kind": "chip",
+          "label": "延后十分钟",
+          "icon": "schedule",
+          "variant": "tonal",
+          "size": 150,
+          "action": {
+            "to": "home",
+            "transition": "slideUp"
+          },
+          "note": "data-cmd=todoSnooze。停止当前提醒，10 分钟后按同一节奏重新触发。"
+        }
+      ]
+    },
+    {
+      "id": "asst-chips5",
+      "x": 1546,
+      "y": 452,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-c-search",
+          "kind": "chip",
+          "label": "搜索",
+          "icon": "search",
+          "variant": "tonal"
+        },
+        {
+          "id": "asst-c-tag",
+          "kind": "chip",
+          "label": "加标签 / 归类",
+          "icon": "sell",
+          "variant": "tonal"
+        }
+      ]
+    },
+    {
+      "id": "asst-foot",
+      "x": 1546,
+      "y": 508,
+      "axis": "x",
+      "items": [
+        {
+          "id": "asst-exit-btn",
+          "kind": "button",
+          "label": "退出助手，回到待机",
+          "icon": "close",
+          "variant": "outlined",
+          "size": 398,
+          "action": {
+            "to": "home",
+            "transition": "slideDown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "me-bar",
+      "x": 2040,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "me-appbar",
+          "kind": "topAppBar",
+          "label": "我的",
+          "icon": "person",
+          "variant": "filled",
+          "icon2": "settings",
+          "supporting": "语忆 · 声音里的第二个大脑"
+        }
+      ]
+    },
+    {
+      "id": "me-group1",
+      "x": 2040,
+      "y": 128,
+      "axis": "x",
+      "items": [
+        {
+          "id": "me-g1",
+          "kind": "text",
+          "label": "使用情况",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "me-stats",
+      "x": 2040,
+      "y": 164,
+      "axis": "y",
+      "items": [
+        {
+          "id": "me-st1",
+          "kind": "listItem",
+          "label": "录音 26 段",
+          "icon": "mic",
+          "variant": "tonal",
+          "icon2": "chevron_right",
+          "supporting": "共 6 小时 12 分 · 最近一次 今天 10:24"
+        },
+        {
+          "id": "me-st2",
+          "kind": "listItem",
+          "label": "AI 总结 22 条",
+          "icon": "auto_awesome",
+          "variant": "tonal",
+          "icon2": "chevron_right",
+          "supporting": "4 段还没生成总结",
+          "action": {
+            "to": "audio",
+            "transition": "slideUp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "me-group2",
+      "x": 2040,
+      "y": 328,
+      "axis": "x",
+      "items": [
+        {
+          "id": "me-g2",
+          "kind": "text",
+          "label": "朗读与通知",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "me-rows",
+      "x": 2040,
+      "y": 364,
+      "axis": "y",
+      "items": [
+        {
+          "id": "me-notify",
+          "kind": "listItem",
+          "label": "通知权限与振动提醒",
+          "icon": "notifications",
+          "variant": "filled",
+          "switch": true,
+          "checked": true,
+          "supporting": "通知需授权才能后台提醒；振动由手机马达执行，可先试一次振动"
+        },
+        {
+          "id": "me-size",
+          "kind": "select",
+          "label": "正文字号",
+          "icon": "format_size",
+          "variant": "outlined",
+          "supporting": "影响所有列表与按钮文字",
+          "tabs": [
+            {
+              "label": "标准"
+            },
+            {
+              "label": "大"
+            },
+            {
+              "label": "特大"
+            }
+          ],
+          "selected": 2
+        },
+        {
+          "id": "me-contrast",
+          "kind": "listItem",
+          "label": "高对比度",
+          "icon": "contrast",
+          "variant": "filled",
+          "switch": true,
+          "checked": false,
+          "supporting": "加深正文与辅助文字对比，适合低视力"
+        },
+        {
+          "id": "me-speed",
+          "kind": "slider",
+          "label": "朗读语速",
+          "icon": "speed",
+          "variant": "filled",
+          "value": 60,
+          "note": "语音不能调节语速，只能在这里手调。"
+        }
+      ]
+    },
+    {
+      "id": "me-group3",
+      "x": 2040,
+      "y": 628,
+      "axis": "x",
+      "items": [
+        {
+          "id": "me-g3",
+          "kind": "text",
+          "label": "更多",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "me-more",
+      "x": 2040,
+      "y": 664,
+      "axis": "y",
+      "items": [
+        {
+          "id": "me-exports",
+          "kind": "listItem",
+          "label": "导出记录",
+          "icon": "download",
+          "variant": "filled",
+          "icon2": "chevron_right",
+          "supporting": "看历史 BRF 导出，可再次下载或删除",
+          "action": {
+            "to": "exports",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "me-help",
+          "kind": "listItem",
+          "label": "帮助与语音指令",
+          "icon": "help",
+          "variant": "filled",
+          "icon2": "chevron_right",
+          "supporting": "可用指令、禁用指令、唤醒词说明",
+          "action": {
+            "to": "help",
+            "transition": "slideUp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "me-nav-bar",
+      "x": 1976,
+      "y": 828,
+      "axis": "x",
+      "items": [
+        {
+          "id": "me-nav-bar-bar",
+          "kind": "bottomNav",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "icon": "home",
+              "label": "首页"
+            },
+            {
+              "icon": "description",
+              "label": "笔记"
+            },
+            {
+              "icon": "graphic_eq",
+              "label": "AI"
+            },
+            {
+              "icon": "person",
+              "label": "我的"
+            },
+            {
+              "icon": "mic",
+              "label": "原音频"
+            }
+          ],
+          "selected": 3,
+          "actions": {
+            "tab:0": {
+              "to": "home",
+              "transition": "none"
+            },
+            "tab:1": {
+              "to": "notes",
+              "transition": "slideUp"
+            },
+            "tab:2": {
+              "to": "assistant",
+              "transition": "slideUp"
+            },
+            "tab:3": {
+              "to": "me",
+              "transition": "fade"
+            },
+            "tab:4": {
+              "to": "audio",
+              "transition": "slideUp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cf-scrim",
+      "x": 0,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "cf-scrim-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 932,
+          "fill": "inverseSurface"
+        }
+      ]
+    },
+    {
+      "id": "cf-base",
+      "x": 0,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "cf-bar",
+          "kind": "topAppBar",
+          "label": "语忆",
+          "icon": null,
+          "variant": "filled",
+          "icon2": "more_vert",
+          "supporting": "声音里的第二个大脑"
+        }
+      ]
+    },
+    {
+      "id": "cf-card",
+      "x": 16,
+      "y": 1232,
+      "axis": "x",
+      "items": [
+        {
+          "id": "cf-card-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 398,
+          "size2": 150,
+          "fill": "surfaceContainer",
+          "radiusTop": 28,
+          "radiusBottom": 28
+        }
+      ]
+    },
+    {
+      "id": "cf-dialog",
+      "x": 59,
+      "y": 1462,
+      "axis": "x",
+      "items": [
+        {
+          "id": "cf-dlg",
+          "kind": "dialog",
+          "label": "录音已保存",
+          "icon": "save",
+          "variant": "filled",
+          "supporting": "待确认｜录音已经保存。是否交给 AI 转换为文字？",
+          "note": "复述待确认内容；“交给 AI 转文字”确认后才提交。"
+        }
+      ]
+    },
+    {
+      "id": "cf-actions",
+      "x": 67,
+      "y": 1722,
+      "axis": "y",
+      "items": [
+        {
+          "id": "cf-ok",
+          "kind": "button",
+          "label": "交给 AI 转文字",
+          "icon": "check",
+          "variant": "filled",
+          "size": 296
+        },
+        {
+          "id": "cf-skip",
+          "kind": "button",
+          "label": "暂不处理",
+          "icon": "schedule",
+          "variant": "text",
+          "size": 296
+        }
+      ]
+    },
+    {
+      "id": "cf-cancel",
+      "x": 67,
+      "y": 1858,
+      "axis": "x",
+      "items": [
+        {
+          "id": "cf-no",
+          "kind": "button",
+          "label": "取消",
+          "icon": "close",
+          "variant": "outlined",
+          "size": 296,
+          "action": {
+            "to": "home",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "au-sheet",
+      "x": 510,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "au-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 632,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0,
+          "note": "底部面板：从下往上推入。"
+        }
+      ]
+    },
+    {
+      "id": "au-head",
+      "x": 510,
+      "y": 1040,
+      "axis": "x",
+      "items": [
+        {
+          "id": "au-bar",
+          "kind": "topAppBar",
+          "label": "原音频",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "每次录音的原始音频都在这里",
+          "actions": {
+            "icon": {
+              "to": "catalog",
+              "transition": "slideDown"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "au-search",
+      "x": 526,
+      "y": 1164,
+      "axis": "x",
+      "items": [
+        {
+          "id": "au-search-field",
+          "kind": "textField",
+          "label": "搜索原音频，或说“小语，搜索……”",
+          "icon": "search",
+          "variant": "outlined",
+          "size": 290
+        },
+        {
+          "id": "au-search-btn",
+          "kind": "button",
+          "label": "搜索",
+          "icon": null,
+          "variant": "outlined",
+          "size": 104
+        }
+      ]
+    },
+    {
+      "id": "au-count",
+      "x": 526,
+      "y": 1232,
+      "axis": "x",
+      "items": [
+        {
+          "id": "au-count-txt",
+          "kind": "text",
+          "label": "共 3 段原音频 · 共 26:17",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "au-list",
+      "x": 526,
+      "y": 1276,
+      "axis": "y",
+      "items": [
+        {
+          "id": "au-1",
+          "kind": "listItem",
+          "label": "高等数学 · 第3章 导数与微分",
+          "icon": "mic",
+          "variant": "filled",
+          "icon2": "play_circle",
+          "supporting": "原声 12:40 · 24.6 MB · 10月3日 10:24 · 已有 AI 总结"
+        },
+        {
+          "id": "au-2",
+          "kind": "listItem",
+          "label": "英语听力精听 · Unit 5",
+          "icon": "mic",
+          "variant": "filled",
+          "icon2": "play_circle",
+          "supporting": "原声 08:15 · 16.1 MB · 10月3日 09:05 · 已有 AI 总结"
+        },
+        {
+          "id": "au-3",
+          "kind": "listItem",
+          "label": "小组讨论 · 期末课题分工",
+          "icon": "mic",
+          "variant": "filled",
+          "icon2": "play_circle",
+          "supporting": "原声 05:22 · 10.4 MB · 10月2日 16:48 · 已有 AI 总结"
+        }
+      ]
+    },
+    {
+      "id": "nt-sheet",
+      "x": 1020,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "nt-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 632,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "nt-head",
+      "x": 1020,
+      "y": 1040,
+      "axis": "x",
+      "items": [
+        {
+          "id": "nt-bar",
+          "kind": "topAppBar",
+          "label": "AI 总结笔记",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "全部由 AI 从原音频里总结提炼",
+          "actions": {
+            "icon": {
+              "to": "catalog",
+              "transition": "slideDown"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "nt-search",
+      "x": 1036,
+      "y": 1164,
+      "axis": "x",
+      "items": [
+        {
+          "id": "nt-search-field",
+          "kind": "textField",
+          "label": "搜索 AI 总结，或说“小语，搜索……”",
+          "icon": "search",
+          "variant": "outlined",
+          "size": 290
+        },
+        {
+          "id": "nt-search-btn",
+          "kind": "button",
+          "label": "搜索",
+          "icon": null,
+          "variant": "outlined",
+          "size": 104
+        }
+      ]
+    },
+    {
+      "id": "nt-count",
+      "x": 1036,
+      "y": 1232,
+      "axis": "x",
+      "items": [
+        {
+          "id": "nt-count-txt",
+          "kind": "text",
+          "label": "共 3 条 AI 总结",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "nt-list",
+      "x": 1036,
+      "y": 1276,
+      "axis": "y",
+      "items": [
+        {
+          "id": "nt-1",
+          "kind": "listItem",
+          "label": "高等数学 · 第3章 导数与微分",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "icon2": "volume_up",
+          "supporting": "要点①导数=瞬时变化率 ②可导⇒连续 ③链式法则 · 待复习 · 原音频 12:40"
+        },
+        {
+          "id": "nt-2",
+          "kind": "listItem",
+          "label": "英语听力精听 · Unit 5",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "icon2": "volume_up",
+          "supporting": "要点①连读弱读是主要丢分点 ②校园场景 ③三遍精听 · 听力 · 原音频 08:15"
+        },
+        {
+          "id": "nt-3",
+          "kind": "listItem",
+          "label": "小组讨论 · 期末课题分工",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "icon2": "volume_up",
+          "supporting": "要点①我=资料+目录 ②小李=数据统计 ③下周三交初稿 · 课题 · 原音频 05:22"
+        }
+      ]
+    },
+    {
+      "id": "td-sheet",
+      "x": 1530,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "td-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 712,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "td-head",
+      "x": 1530,
+      "y": 1040,
+      "axis": "x",
+      "items": [
+        {
+          "id": "td-bar",
+          "kind": "topAppBar",
+          "label": "待办",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "新增、查看、标记完成、删除",
+          "actions": {
+            "icon": {
+              "to": "home",
+              "transition": "slideDown"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "td-warn",
+      "x": 1546,
+      "y": 1164,
+      "axis": "x",
+      "items": [
+        {
+          "id": "td-warn-card",
+          "kind": "card",
+          "label": "安卓振动提醒",
+          "icon": "vibration",
+          "variant": "tonal",
+          "noImage": true,
+          "size": 398,
+          "size2": 130,
+          "supporting": "三段式节奏：短震200ms → 停100ms → 长震600ms → 停150ms → 短震200ms；共 3 组，组间停 2 秒，总长约 18 秒。"
+        }
+      ]
+    },
+    {
+      "id": "td-notify",
+      "x": 1546,
+      "y": 1314,
+      "axis": "x",
+      "items": [
+        {
+          "id": "td-notify-row",
+          "kind": "listItem",
+          "label": "通知权限 · 振动开关",
+          "icon": "notifications",
+          "variant": "filled",
+          "switch": true,
+          "checked": true,
+          "size": 398,
+          "supporting": "通知授权用于后台兜底；振动开关控制手机马达，可试一次振动",
+          "note": "对应 #notifySwitch（通知权限，沿用现有 id）与 #vibSwitch（振动提醒开关，aria-pressed）；#vibTestBtn「试一次振动」在无 navigator.vibrate 时 hidden，#vibState 显示振动可用性一句话状态。"
+        }
+      ]
+    },
+    {
+      "id": "td-add",
+      "x": 1546,
+      "y": 1406,
+      "axis": "x",
+      "items": [
+        {
+          "id": "td-input",
+          "kind": "textField",
+          "label": "新增待办内容",
+          "icon": "add_task",
+          "variant": "outlined",
+          "size": 290
+        },
+        {
+          "id": "td-add-btn",
+          "kind": "button",
+          "label": "新增",
+          "icon": "add",
+          "variant": "filled",
+          "size": 104
+        }
+      ]
+    },
+    {
+      "id": "td-list",
+      "x": 1546,
+      "y": 1482,
+      "axis": "y",
+      "items": [
+        {
+          "id": "td-1",
+          "kind": "listItem",
+          "label": "周三前把课题初稿发到群里",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "icon2": "vibration",
+          "supporting": "震动提醒 · 10月8日 09:00 · 来自 AI 总结",
+          "note": ".todo-mode 徽标显示「震动」；整条朗读串 todoAria()：「震动提醒，待办内容周三前把课题初稿发到群里」。"
+        },
+        {
+          "id": "td-2",
+          "kind": "listItem",
+          "label": "复习高等数学第3章导数部分",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "icon2": "vibration",
+          "supporting": "震动提醒 · 今天 20:00 · 来自 AI 总结",
+          "note": ".todo-mode 徽标显示「震动」；整条朗读串 todoAria()：「震动提醒，待办内容复习高等数学第3章导数部分」。"
+        },
+        {
+          "id": "td-3",
+          "kind": "listItem",
+          "label": "把英语 Unit 5 原文打印出来",
+          "icon": "check_circle",
+          "variant": "filled",
+          "supporting": "已完成 · 手动新增"
+        }
+      ]
+    },
+    {
+      "id": "exports-sheet",
+      "x": 2040,
+      "y": 1032,
+      "axis": "x",
+      "items": [
+        {
+          "id": "exports-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 552,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "exports-bar",
+      "x": 2040,
+      "y": 1040,
+      "axis": "x",
+      "items": [
+        {
+          "id": "exports-appbar",
+          "kind": "topAppBar",
+          "label": "导出记录",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "历史 BRF 导出 · 可重新下载或删除",
+          "actions": {
+            "icon": {
+              "to": "me",
+              "transition": "slideUp"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "exports-count",
+      "x": 2056,
+      "y": 1164,
+      "axis": "x",
+      "items": [
+        {
+          "id": "exports-count-txt",
+          "kind": "text",
+          "label": "共 3 次导出 · 最近 今天 10:31",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "exports-list",
+      "x": 2056,
+      "y": 1208,
+      "axis": "y",
+      "items": [
+        {
+          "id": "ex-1x",
+          "kind": "listItem",
+          "label": "高等数学 · 第3章 导数与微分",
+          "icon": "description",
+          "variant": "filled",
+          "icon2": "download",
+          "supporting": "今天 10:31 · yuyi-a1.brf · 中文盲文一级 · 18 KB"
+        },
+        {
+          "id": "ex-2x",
+          "kind": "listItem",
+          "label": "英语听力精听 · Unit 5",
+          "icon": "description",
+          "variant": "filled",
+          "icon2": "download",
+          "supporting": "今天 09:12 · yuyi-a2.brf · 中文盲文一级 · 12 KB"
+        },
+        {
+          "id": "ex-3x",
+          "kind": "listItem",
+          "label": "小组讨论 · 期末课题分工",
+          "icon": "description",
+          "variant": "filled",
+          "icon2": "download",
+          "supporting": "昨天 17:02 · yuyi-a3.brf · 中文盲文二级 · 9 KB"
+        }
+      ]
+    },
+    {
+      "id": "exports-foot",
+      "x": 2056,
+      "y": 1464,
+      "axis": "x",
+      "items": [
+        {
+          "id": "exs-all",
+          "kind": "button",
+          "label": "全部导出",
+          "icon": "download",
+          "variant": "tonal",
+          "size": 191
+        },
+        {
+          "id": "exs-del",
+          "kind": "button",
+          "label": "清空记录",
+          "icon": "delete",
+          "variant": "outlined",
+          "size": 191,
+          "note": "清空历史记录不影响音频和笔记；删除前会二次确认。"
+        }
+      ]
+    },
+    {
+      "id": "help-sheet",
+      "x": 0,
+      "y": 2064,
+      "axis": "x",
+      "items": [
+        {
+          "id": "help-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 782,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "help-bar",
+      "x": 0,
+      "y": 2072,
+      "axis": "x",
+      "items": [
+        {
+          "id": "help-appbar",
+          "kind": "topAppBar",
+          "label": "帮助与语音指令",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "唤醒词 · 可用指令 · 禁用项",
+          "actions": {
+            "icon": {
+              "to": "me",
+              "transition": "slideUp"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "help-wake",
+      "x": 16,
+      "y": 2196,
+      "axis": "x",
+      "items": [
+        {
+          "id": "help-wake-card",
+          "kind": "card",
+          "label": "唤醒词是“小语”",
+          "icon": "record_voice_over",
+          "variant": "tonal",
+          "noImage": true,
+          "size": 398,
+          "size2": 110,
+          "supporting": "也可以说“你好，小语”。录音时说的话不会误唤醒助手。"
+        }
+      ]
+    },
+    {
+      "id": "help-on",
+      "x": 16,
+      "y": 2326,
+      "axis": "y",
+      "items": [
+        {
+          "id": "help-l1",
+          "kind": "listItem",
+          "label": "小语，开始录音",
+          "icon": "mic",
+          "variant": "filled",
+          "supporting": "开始一段课堂原声记录"
+        },
+        {
+          "id": "help-l2",
+          "kind": "listItem",
+          "label": "小语，原音频",
+          "icon": "graphic_eq",
+          "variant": "filled",
+          "supporting": "打开原音频面板，播放或管理录音"
+        },
+        {
+          "id": "help-l3",
+          "kind": "listItem",
+          "label": "小语，AI 总结 / 重新总结",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "supporting": "打开 AI 提炼的总结，或重新提炼要点与标签"
+        },
+        {
+          "id": "help-l4",
+          "kind": "listItem",
+          "label": "小语，搜索 / 提醒 / 导出",
+          "icon": "search",
+          "variant": "filled",
+          "supporting": "搜索笔记 · 新建待办 · 导出中文盲文 BRF"
+        },
+        {
+          "id": "help-l5",
+          "kind": "listItem",
+          "label": "小语，退出 / 返回 / 重复 / 取消",
+          "icon": "logout",
+          "variant": "filled",
+          "supporting": "通用控制；结束只在录音中生效"
+        }
+      ]
+    },
+    {
+      "id": "help-off",
+      "x": 16,
+      "y": 2706,
+      "axis": "x",
+      "items": [
+        {
+          "id": "help-off-card",
+          "kind": "card",
+          "label": "不能用的说法",
+          "icon": "block",
+          "variant": "outlined",
+          "noImage": true,
+          "size": 398,
+          "size2": 110,
+          "supporting": "暂停/继续录音 · 语速调快调慢 · 自由闲聊（只能用按钮或设置里手调）"
+        }
+      ]
+    },
+    {
+      "id": "ct-sheet",
+      "x": 510,
+      "y": 2064,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-sheet-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 692,
+          "fill": "surface",
+          "radiusTop": 26,
+          "radiusBottom": 0
+        }
+      ]
+    },
+    {
+      "id": "ct-head",
+      "x": 510,
+      "y": 2072,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-bar",
+          "kind": "topAppBar",
+          "label": "目录",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "先选要看什么：原音频，还是 AI 总结笔记",
+          "actions": {
+            "icon": {
+              "to": "home",
+              "transition": "slideDown"
+            },
+            "icon2": {
+              "to": "home",
+              "transition": "slideDown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ct-entries",
+      "x": 526,
+      "y": 2196,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-open-audio",
+          "kind": "button",
+          "label": "原音频",
+          "icon": "graphic_eq",
+          "variant": "tonal",
+          "size": 191,
+          "action": {
+            "to": "audio",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "ct-open-notes",
+          "kind": "button",
+          "label": "AI 总结笔记",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "size": 191,
+          "action": {
+            "to": "notes",
+            "transition": "slideUp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ct-hint",
+      "x": 526,
+      "y": 2264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-hint-txt",
+          "kind": "text",
+          "label": "原音频是底稿，AI 总结是附注；改总结不会动原声。",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "ct-nav",
+      "x": 526,
+      "y": 2308,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-prev",
+          "kind": "button",
+          "label": "上一组",
+          "icon": "arrow_back",
+          "variant": "outlined",
+          "size": 150
+        },
+        {
+          "id": "ct-next",
+          "kind": "button",
+          "label": "下一组",
+          "icon": "arrow_forward",
+          "variant": "outlined",
+          "size": 150
+        }
+      ]
+    },
+    {
+      "id": "ct-group",
+      "x": 526,
+      "y": 2384,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ct-group-h",
+          "kind": "listItem",
+          "label": "高等数学",
+          "icon": "folder",
+          "variant": "tonal",
+          "icon2": "volume_up",
+          "size": 398,
+          "supporting": "8 条记录 · 最近更新 今天"
+        }
+      ]
+    },
+    {
+      "id": "ct-list",
+      "x": 526,
+      "y": 2468,
+      "axis": "y",
+      "items": [
+        {
+          "id": "ct-1",
+          "kind": "listItem",
+          "label": "01 第1章 函数与极限",
+          "icon": "article",
+          "variant": "filled",
+          "icon2": "chevron_right",
+          "supporting": "今天 08:10 · 11:20"
+        },
+        {
+          "id": "ct-2",
+          "kind": "listItem",
+          "label": "02 第2章 一元函数微分学",
+          "icon": "article",
+          "variant": "filled",
+          "icon2": "chevron_right",
+          "supporting": "今天 09:02 · 14:05"
+        },
+        {
+          "id": "ct-3",
+          "kind": "listItem",
+          "label": "03 第3章 导数与微分",
+          "icon": "article",
+          "variant": "filled",
+          "icon2": "chevron_right",
+          "supporting": "今天 10:24 · 12:40 · 当前"
+        }
+      ]
+    },
+    {
+      "id": "ex-scrim",
+      "x": 1020,
+      "y": 2064,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ex-scrim-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 932,
+          "fill": "inverseSurface"
+        }
+      ]
+    },
+    {
+      "id": "ex-dialog",
+      "x": 1079,
+      "y": 2304,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ex-dlg",
+          "kind": "dialog",
+          "label": "导出中文盲文 BRF",
+          "icon": "download",
+          "variant": "filled",
+          "supporting": "将要执行｜将使用这条笔记的原始内容生成中文盲文 BRF。原文不会改变。确认导出吗？"
+        }
+      ]
+    },
+    {
+      "id": "ex-actions",
+      "x": 1087,
+      "y": 2564,
+      "axis": "y",
+      "items": [
+        {
+          "id": "ex-ok",
+          "kind": "button",
+          "label": "确认导出",
+          "icon": "check",
+          "variant": "filled",
+          "size": 296
+        },
+        {
+          "id": "ex-other",
+          "kind": "button",
+          "label": "换一段音频",
+          "icon": "swap_horiz",
+          "variant": "tonal",
+          "size": 296
+        }
+      ]
+    },
+    {
+      "id": "ex-cancel",
+      "x": 1087,
+      "y": 2700,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ex-no",
+          "kind": "button",
+          "label": "取消",
+          "icon": "close",
+          "variant": "outlined",
+          "size": 296,
+          "action": {
+            "to": "home",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ex-done",
+      "x": 1036,
+      "y": 2796,
+      "axis": "x",
+      "items": [
+        {
+          "id": "ex-done-card",
+          "kind": "card",
+          "label": "导出完成",
+          "icon": "task_alt",
+          "variant": "tonal",
+          "noImage": true,
+          "size": 398,
+          "size2": 120,
+          "supporting": "盲文文档导出完成。原文和笔记内容没有变化。yuyi-a1.brf（中文盲文一级）"
+        }
+      ]
+    },
+    {
+      "id": "saved-scrim",
+      "x": 1530,
+      "y": 2064,
+      "axis": "x",
+      "items": [
+        {
+          "id": "saved-scrim-box",
+          "kind": "box",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 430,
+          "size2": 932,
+          "fill": "inverseSurface"
+        }
+      ]
+    },
+    {
+      "id": "saved-card",
+      "x": 1546,
+      "y": 2344,
+      "axis": "x",
+      "items": [
+        {
+          "id": "saved-card-card",
+          "kind": "card",
+          "label": "原始音频已经保存到本地",
+          "icon": "task_alt",
+          "variant": "tonal",
+          "noImage": true,
+          "size": 398,
+          "size2": 140,
+          "supporting": "今天 10:24 · 时长 12:40 · 24.6 MB；随时可以回放，AI 总结只是附注。"
+        }
+      ]
+    },
+    {
+      "id": "saved-actions",
+      "x": 1546,
+      "y": 2534,
+      "axis": "y",
+      "items": [
+        {
+          "id": "saved-ai",
+          "kind": "button",
+          "label": "交给 AI 转文字",
+          "icon": "auto_awesome",
+          "variant": "filled",
+          "size": 398,
+          "action": {
+            "to": "notes",
+            "transition": "fade"
+          }
+        },
+        {
+          "id": "saved-play",
+          "kind": "button",
+          "label": "回放原音频",
+          "icon": "play_circle",
+          "variant": "tonal",
+          "size": 398,
+          "action": {
+            "to": "audio",
+            "transition": "slideUp"
+          }
+        },
+        {
+          "id": "saved-later",
+          "kind": "button",
+          "label": "先放着",
+          "icon": "schedule",
+          "variant": "outlined",
+          "size": 398,
+          "action": {
+            "to": "home",
+            "transition": "slideDown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "brand-bar",
+      "x": 2040,
+      "y": 2064,
+      "axis": "x",
+      "items": [
+        {
+          "id": "brand-appbar",
+          "kind": "topAppBar",
+          "label": "语忆 · 实现对照",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "色板 / 层级 / 语音指令 / 禁用项"
+        }
+      ]
+    },
+    {
+      "id": "brand-text",
+      "x": 2040,
+      "y": 2172,
+      "axis": "y",
+      "items": [
+        {
+          "id": "brand-t1",
+          "kind": "text",
+          "label": "主色 深墨绿 #2A4A40｜录音卡片 #F7F5EF｜页面底 #FFFFFF｜正文 #111111｜辅助 #777777｜品牌橙 #F07C1E",
+          "icon": null,
+          "variant": "text",
+          "size": 14,
+          "bold": true
+        },
+        {
+          "id": "brand-t2",
+          "kind": "text",
+          "label": "手机帧 430 × 932（约 9:19.5），内容边距 16，底部 Tab 高 104，内容在 Tab 之上滚动",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        },
+        {
+          "id": "brand-t3",
+          "kind": "text",
+          "label": "层级 z-index：页面 0 → 底部 Tab 20 → 右侧悬浮工具栏 30 → 面板 40 → 助手浮层 50 → 提示 60",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        },
+        {
+          "id": "brand-t4",
+          "kind": "text",
+          "label": "字号：品牌名 23/加粗 · 大标题 27/加粗 · 卡片小字 12 · 辅助 12–13 · 按钮 14–15",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        },
+        {
+          "id": "brand-t5",
+          "kind": "text",
+          "label": "圆角：卡片 28 · 面板 26 · 弹窗 22 · 按钮/输入框 14–16 · 侧边栏 20",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        },
+        {
+          "id": "brand-t6",
+          "kind": "text",
+          "label": "语音可做：开始录音 · 原音频 · AI 总结 · 重新总结 · 搜索 · 提醒我……（新建待办）· 知道了 · 延后十分钟 · 试一次振动 · 打开目录 · 跳转条目 · 打标签归类 · 删除 · 导出盲文 · 退出/返回/重复/帮助/取消 · 结束（仅录音中）",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        },
+        {
+          "id": "brand-t7",
+          "kind": "text",
+          "label": "语音禁用：暂停录音 · 继续录音 · 语速调快/调慢 · 自由闲聊 · 读取系统静音或勿扰状态 · 调用系统闹钟应用（振动只经浏览器马达 API 触发；低置信只提示重说）",
+          "icon": null,
+          "variant": "text",
+          "size": 13,
+          "textColor": "secondary"
+        },
+        {
+          "id": "brand-t8",
+          "kind": "text",
+          "label": "无障碍：语义化标签 + aria-live 播报 + 提醒弹窗焦点圈定与归还 + 振动标识朗读为「震动提醒模式」 + 触控目标≥44dp（新增待办/振动控件≥48dp，提醒弹窗按钮≥56dp） + 支持 prefers-reduced-motion 与深色模式",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        }
+      ]
+    },
+    {
+      "id": "remind-bar",
+      "x": 0,
+      "y": 3096,
+      "axis": "x",
+      "items": [
+        {
+          "id": "remind-appbar",
+          "kind": "topAppBar",
+          "label": "提醒触发",
+          "icon": "notifications_active",
+          "variant": "filled",
+          "icon2": "close",
+          "supporting": "到点自动弹出 · 振动 + 通知 + 语音同时进行",
+          "actions": {
+            "icon": {
+              "to": "home",
+              "transition": "slideDown"
+            },
+            "icon2": {
+              "to": "todos",
+              "transition": "slideUp"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "remind-dialog",
+      "x": 59,
+      "y": 3204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "remind-dlg",
+          "kind": "dialog",
+          "label": "待办提醒",
+          "icon": "vibration",
+          "variant": "filled",
+          "supporting": "周三前把课题初稿发到群里",
+          "note": "对应 #remindDlg（role=alertdialog、aria-modal=true；层级与 #helpPanel 同级：.scrim 系、在面板之上、Toast 之下；带 .scrim 遮罩）：#remindTitle 固定为「待办提醒」，#remindBody 为待办全文；打开即 focus 标题、焦点圈定在弹窗内，关闭后焦点归还触发源；双指滑动可切换两个选项。"
+        }
+      ]
+    },
+    {
+      "id": "remind-voice",
+      "x": 16,
+      "y": 3444,
+      "axis": "x",
+      "items": [
+        {
+          "id": "remind-voice-txt",
+          "kind": "text",
+          "label": "语音播报：待办提醒：周三前把课题初稿发到群里（第一组振动结束后启动，慢速重复 2 遍）",
+          "icon": null,
+          "variant": "text",
+          "size": 13
+        }
+      ]
+    },
+    {
+      "id": "remind-safety",
+      "x": 16,
+      "y": 3481,
+      "axis": "x",
+      "items": [
+        {
+          "id": "remind-safe-txt",
+          "kind": "text",
+          "label": "静音/勿扰不影响振动；点通知、说「知道了 / 明白了 / 停」或打开待办页立即停止",
+          "icon": null,
+          "variant": "text",
+          "size": 12,
+          "textColor": "onSurfaceVariant"
+        }
+      ]
+    },
+    {
+      "id": "remind-actions",
+      "x": 16,
+      "y": 3525,
+      "axis": "x",
+      "items": [
+        {
+          "id": "remind-ack",
+          "kind": "button",
+          "label": "知道了",
+          "icon": "check",
+          "variant": "filled",
+          "size": 191,
+          "note": "对应 #remindAckBtn（高 56dp，≥48dp）。点击＝navigator.vibrate(0) 停振并清定时器、标记已提醒、关闭常驻通知、焦点归还后回待机；播报「已知道了，提醒已停止」。语音 todoAck（知道了 / 明白了 / 停）完全等效。",
+          "action": {
+            "to": "home",
+            "transition": "fade"
+          }
+        },
+        {
+          "id": "remind-snooze",
+          "kind": "button",
+          "label": "延后 10 分钟",
+          "icon": "schedule",
+          "variant": "tonal",
+          "size": 191,
+          "note": "对应 #remindSnoozeBtn（高 56dp，≥48dp）。点击＝停止当前振动与播报、snooze+1，10 分钟后按同一节奏重新触发；播报「好，10 分钟后再提醒您」。语音 todoSnooze（延后十分钟 / 等会儿再提醒）完全等效。",
+          "action": {
+            "to": "home",
+            "transition": "fade"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>语忆 · 页面内离线语音识别（WASM）自测</title>
+<!--
+  ============================================================================
+  语忆 · 离线 ASR(WASM) 自测页
+  ============================================================================
+  这个页面只做一件事：**在不碰 index.html 的前提下**，证明
+  `data/asr/` 里的 WASM 引擎 + 中文模型能在浏览器里把普通话识别成文字，
+  并且**不依赖任何外部域名**。
+
+  怎么用
+  ------
+  · 手动看：起一个只服务 yuyi-preview/ 的静态服务器，浏览器打开本页；
+    结果会显示在页面上，同时存在 window.__ASR_RESULT__。
+  · 自动跑：`node _tools/verify-asr-wasm.mjs`（headless Chrome + CDP 驱动本页）。
+
+  它走的就是 index.html 将来要用的那个接口 —— data/asr/yuyi-asr.js 的 YuyiASR：
+      create({baseUrl, onStatus, onPartial, onResult, onError})
+      → init() → start({mic:false}) → feed(16k PCM，分片) → stop()
+  麦克风路径（start({mic:true})）在 headless 里拿不到设备，所以这里用
+  「解码 wav → 分片喂 PCM」来模拟流式输入，正是任务要求的喂法。
+
+  不做任何假动作
+  --------------
+  · 不从 CDN 加载任何东西：引擎与模型都用相对路径指向 ../data/asr/，
+    并把解析后的**绝对 URL** 一起报出来，方便核对是不是同源。
+  · 结果为空 / 没中文 / 超时，一律如实标记 ok:false 并写明原因。
+  ============================================================================
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.6 system-ui, "Microsoft YaHei", sans-serif; margin: 0; padding: 16px 18px 40px; }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  .sub { opacity: .65; margin: 0 0 14px; }
+  #summary { padding: 10px 12px; border-radius: 8px; background: #eef4ff; margin-bottom: 14px; white-space: pre-wrap; }
+  #summary[data-ok="1"] { background: #e8f7ec; }
+  #summary[data-ok="0"] { background: #fdecec; }
+  pre { background: #f6f7f9; padding: 12px; border-radius: 8px; overflow: auto; max-height: 60vh; white-space: pre-wrap; word-break: break-word; }
+  @media (prefers-color-scheme: dark) {
+    #summary { background: #21262d; } #summary[data-ok="1"] { background: #12261a; } #summary[data-ok="0"] { background: #2b1416; }
+    pre { background: #161b22; }
+  }
+</style>
+</head>
+<body>
+<h1>语忆 · 页面内离线语音识别（WASM）自测</h1>
+<p class="sub">引擎与模型都来自本机 <code>data/asr/</code>；识别在浏览器本机完成。</p>
+<div id="summary" data-ok="-1">正在跑…</div>
+<pre id="log"></pre>
+
+<script src="../data/asr/yuyi-asr.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var QS = new URLSearchParams(location.search);
+  var WAV_URL   = QS.get('wav') || '/__src__/test-sample.wav';
+  var BASE_URL  = QS.get('base') || '../data/asr/';
+  var SLICES    = parseInt(QS.get('slices') || '5', 10);     // 至少 3 片（任务要求）
+  var SUBCHUNK  = parseInt(QS.get('sub') || '3200', 10);     // 每片内部再切成 ~200ms 小块
+  var WARM      = QS.get('warm') === '1';                    // 顺带量一次「模型已在 IndexedDB 缓存」的加载耗时
+  var PASSES    = parseInt(QS.get('passes') || '1', 10);     // ≥2 时多跑一遍量稳态 RTF
+  var EXTERNAL  = QS.get('external') || 'https://registry.npmjs.org/vosk-browser/0.0.8';
+
+  var T0 = performance.now();                                 // ≈ navigationStart 起算
+  var logEl = document.getElementById('log');
+  var sumEl = document.getElementById('summary');
+
+  function log() {
+    var line = Array.prototype.map.call(arguments, function (a) {
+      return (typeof a === 'string') ? a : JSON.stringify(a);
+    }).join(' ');
+    logEl.textContent += line + '\n';
+    console.log('[asr-test]', line);
+  }
+
+  /* ---------------------------------------------------------------- 外部探测
+     用作「阻断是否真的生效」的对照：
+       · 正常一轮：这里应当 ok（说明本机确实能上外网）
+       · 阻断一轮：这里应当失败（说明 --host-resolver-rules 真的把外部域名掐了）
+     没有这个对照，「离线那轮成功」就不能排除「其实根本没被阻断」。 */
+  function probeExternal() {
+    var started = performance.now();
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return fetch(EXTERNAL, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return { ok: r.ok, status: r.status }; })
+      .catch(function (e) { return { ok: false, error: String((e && e.name) || e) }; })
+      .then(function (r) {
+        clearTimeout(timer);
+        r.ms = Math.round(performance.now() - started);
+        r.url = EXTERNAL;
+        return r;
+      });
+  }
+
+  /* --------------------------------------------------------- 同源证据 */
+  function resourceEvidence() {
+    var entries = performance.getEntriesByType('resource') || [];
+    return entries
+      .filter(function (e) {
+        // 排除本页自己做「外部域名探测」打的那一发（它就是故意的跨域对照），
+        // 否则会把对照组误报成「页面依赖了 CDN」。
+        if (e.name.indexOf(EXTERNAL) === 0) return false;
+        return /vosk|yuyi-asr|asr\//i.test(e.name) || /\.js(\?|$)/i.test(e.name);
+      })
+      .map(function (e) {
+        return {
+          url: e.name,
+          sameOrigin: e.name.indexOf(location.origin) === 0,
+          bytes: e.transferSize || e.encodedBodySize || 0,
+          ms: Math.round(e.duration)
+        };
+      });
+  }
+
+  function say(s) { sumEl.textContent = s; }
+
+  /* ============================================================ 主流程 */
+  function run() {
+    var result = {
+      schema: 'yuyi-asr-wasm-test/1',
+      startedAt: new Date().toISOString(),
+      pageOrigin: location.origin,
+      pageHref: location.href,
+      ua: navigator.userAgent,
+      engineUrl: new URL('vosk.js', new URL(BASE_URL, location.href)).href,
+      modelUrl: new URL('model.tar.gz', new URL(BASE_URL, location.href)).href,
+      timings: {},
+      chunks: { slices: 0, totalSubChunks: 0, results: 0, partials: 0 },
+      pcm: {},
+      finals: [],
+      partialSamples: [],
+      text: '',
+      external: null,
+      ok: false,
+      problems: []
+    };
+
+    var asr = null;
+    var partials = 0, results = 0, firstTextMs = null;
+    var collect = true;                  // 第 2 遍量稳态时置 false：只计时，不采集文本
+    var partialSamples = [];
+
+    log('页面起点 T0 已记下；引擎 URL =', result.engineUrl);
+    log('模型 URL =', result.modelUrl);
+
+    var env = YuyiASR.available();
+    log('环境自检：', env);
+    if (!env.ok) result.problems.push('浏览器环境不支持：' + env.why);
+
+    return probeExternal()
+      .then(function (probe) {
+        result.external = probe;
+        log('外部域名探测（对照组）：', probe);
+        return YuyiASR.decodeToPcm16k;   // 只是往下走
+      })
+      .then(function () {
+        asr = YuyiASR.create({
+          baseUrl: BASE_URL,
+          onStatus: function (s) {
+            log('  · status =', s, '(' + Math.round(performance.now()) + ' ms)');
+            if (s === 'ready') result.timings.modelReadyMs = Math.round(performance.now());
+            if (s === 'error' && asr && asr.state().error) result.problems.push(asr.state().error);
+          },
+          onPartial: function (t) {
+            if (!collect) return;                     // 第 2 遍只计时，不采集文本
+            partials++;
+            if (partialSamples.length < 12) partialSamples.push(t);
+            if (firstTextMs === null) firstTextMs = performance.now();
+          },
+          onResult: function (t) {
+            if (!collect) return;
+            results++;
+            result.finals.push(t);
+            if (firstTextMs === null) firstTextMs = performance.now();
+          },
+          onError: function (e) { result.problems.push('onError: ' + e.message); log('  ! onError', e.message); }
+        });
+
+        result.assets = null;
+        return asr.describeAssets().then(function (a) {
+          result.assets = a;
+          log('资源体积（manifest）：', a);
+        });
+      })
+      .then(function () {
+        result.timings.engineModelLoadStartMs = Math.round(performance.now());
+        return asr.init();
+      })
+      .then(function () {
+        result.timings.initResolvedMs = Math.round(performance.now());
+        log('模型就绪，用时 ' + Math.round(performance.now()) + ' ms');
+        return asr.start({ mic: false });
+      })
+      .then(function () {
+        result.timings.listeningMs = Math.round(performance.now());
+        log('识别器已就绪，开始取音频…');
+        return fetch(WAV_URL, { cache: 'no-store' });
+      })
+      .then(function (r) {
+        if (!r.ok) throw new Error('取测试音频失败：HTTP ' + r.status + ' ' + WAV_URL);
+        return r.arrayBuffer();
+      })
+      .then(function (buf) {
+        result.timings.decodedAt = Math.round(performance.now());
+        return YuyiASR.decodeToPcm16k(buf);
+      })
+      .then(function (pcm) {
+        result.pcm.samples = pcm.length;
+        result.pcm.sampleRate = YuyiASR.SAMPLE_RATE;
+        result.pcm.seconds = +(pcm.length / YuyiASR.SAMPLE_RATE).toFixed(3);
+        result.timings.decodedTotalMs = Math.round(performance.now());
+        log('PCM：' + pcm.length + ' 采样点 / ' + result.pcm.seconds + ' 秒 @16k 单声道');
+
+        var n = Math.max(3, SLICES);                      // 任务要求：至少 3 片
+        var per = Math.ceil(pcm.length / n);
+        result.chunks.slices = n;
+
+        /* 一遍 = 分 n 片喂完整段音频（片内再切 SUBCHUNK 小块，模拟流式）。
+           第 1 遍含 wasm JIT + 68 MB 模型分页的一次性成本，会明显偏慢；
+           PASSES=2 时再跑一遍量稳态 —— 长录音看稳态才有意义。 */
+        function onePass(label) {
+          var started = performance.now();
+          log('开始' + label + '：' + n + ' 片，每片内部再切 ' + SUBCHUNK + ' 点的小块…');
+          var chain = Promise.resolve();
+          for (var s = 0; s < n; s++) {
+            (function (idx) {
+              chain = chain.then(function () {
+                var slice = pcm.subarray(idx * per, Math.min((idx + 1) * per, pcm.length));
+                var inner = Promise.resolve();
+                for (var off = 0; off < slice.length; off += SUBCHUNK) {
+                  (function (chunk) {
+                    inner = inner.then(function () {
+                      result.chunks.totalSubChunks++;
+                      // await：等 worker 处理完这一块再喂下一块，不堆队列
+                      return asr.feed(chunk);
+                    });
+                  })(slice.subarray(off, Math.min(off + SUBCHUNK, slice.length)));
+                }
+                return inner.then(function () {
+                  log('  第 ' + (idx + 1) + '/' + n + ' 片喂完 @' +
+                      Math.round(performance.now() - T0) + ' ms（累计 result=' + results +
+                      ' partial=' + partials + '）');
+                });
+              });
+            })(s);
+          }
+          return chain.then(function () {
+            var ms = Math.round(performance.now() - started);
+            log(label + '耗时 ' + ms + ' ms（RTF ' + (ms / 1000 / result.pcm.seconds).toFixed(3) + '）');
+            return ms;
+          });
+        }
+
+        result.timings.feedStartMs = result.timings.decodedTotalMs;
+        return onePass('第 1 遍（含首次预热）').then(function (ms1) {
+          result.timings.feedEndMs = result.timings.decodedTotalMs + ms1;
+          result.timings.recognizeMs = ms1;
+          if (PASSES < 2) return null;
+          // 第 2 遍**只用来量耗时**：把采集关掉（collect=false），
+          // 免得同一段话被算两遍 —— 那会把与 Python 的重合率拉低成假 FAIL。
+          collect = false;
+          return asr.stop()
+            .then(function () { return asr.start({ mic: false }); })
+            .then(function () { return onePass('第 2 遍（稳态，只计时）'); })
+            .then(function (ms2) {
+              result.timings.steadyMs = ms2;
+              result.timings.steadyRtf = +(ms2 / 1000 / result.pcm.seconds).toFixed(3);
+            });
+        });
+      })
+      .then(function () {
+        return asr.stop();                                 // 取回尾巴
+      })
+      .then(function (tail) {
+        result.timings.stopMs = Math.round(performance.now());
+        if (tail) { result.finals.push(tail); results++; }
+        result.chunks.results = results;
+        result.chunks.partials = partials;
+        result.partialSamples = partialSamples;
+        result.text = result.finals.join(' ').trim();
+
+        /* ------------------------------------------------ 判定（和 verify 脚本同口径） */
+        result.timings.pageStartToFirstTextMs = firstTextMs === null
+          ? null : Math.round(firstTextMs - T0);
+        result.timings.pageStartToModelReadyMs = result.timings.modelReadyMs || null;
+        result.timings.pageStartToRecognizedMs = Math.round(result.timings.stopMs - T0);
+        result.timings.rtf = result.pcm.seconds
+          ? +(result.timings.recognizeMs / 1000 / result.pcm.seconds).toFixed(3) : null;
+        result.chunks.count = result.chunks.totalSubChunks;
+        result.resources = resourceEvidence();
+        result.asrState = asr ? asr.state() : null;       // 含 dropped：>0 说明这台机器算不过来
+
+        if (!result.text) result.problems.push('识别结果为空');
+        if (!/[\u4e00-\u9fff]/.test(result.text)) result.problems.push('识别结果里没有中文字符');
+        if (result.chunks.slices < 3) result.problems.push('分片数少于 3');
+        if (results < 1) result.problems.push('一条最终结果都没有拿到');
+
+        var offOrigin = (result.resources || []).filter(function (r) { return !r.sameOrigin; });
+        if (offOrigin.length) result.problems.push('有跨域资源：' + offOrigin.map(function (r) { return r.url; }).join(', '));
+
+        result.ok = result.problems.length === 0;
+
+        if (WARM) {
+          log('附加一轮：销毁后重新 init，量一次「模型已缓存」的加载耗时…');
+          var again = YuyiASR.create({ baseUrl: BASE_URL, logLevel: -1 });
+          var w0 = performance.now();
+          return again.init()
+            .then(function () {
+              result.timings.warmInitMs = Math.round(performance.now() - w0);
+              log('缓存命中时 init 用时 ' + result.timings.warmInitMs + ' ms');
+              again.destroy();
+            })
+            .catch(function (e) {
+              result.timings.warmInitMs = null;
+              result.problems.push('warm init 失败：' + String(e && e.message || e));
+              result.ok = false;
+            });
+        }
+        return null;
+      })
+      .then(function () { report(result); return result; })
+      .catch(function (e) {
+        result.problems.push('异常中断：' + String((e && e.message) || e));
+        result.ok = false;
+        result.timings.pageStartToErrorMs = Math.round(performance.now() - T0);
+        report(result);
+        return result;
+      })
+      .then(function (r) {
+        if (asr) { try { asr.destroy(); } catch (e) {} }
+        window.__ASR_RESULT__ = r;
+        window.__ASR_DONE__ = true;
+        return r;
+      }, function (e) {
+        window.__ASR_RESULT__ = result;
+        window.__ASR_DONE__ = true;
+        throw e;
+      });
+  }
+
+  function report(r) {
+    say((r.ok ? '✅ PASS' : '❌ FAIL') + '\n' +
+        '识别文本：' + (r.text || '（空）') + '\n' +
+        '分片 ' + r.chunks.slices + ' 片 / 子块 ' + r.chunks.count +
+        '，result=' + r.chunks.results + ' partial=' + r.chunks.partials + '\n' +
+        '音频 ' + r.pcm.seconds + 's，第1遍 ' + r.timings.recognizeMs + 'ms (RTF=' + r.timings.rtf + ')' +
+        (r.timings.steadyMs != null ? '，稳态 ' + r.timings.steadyMs + 'ms (RTF=' + r.timings.steadyRtf + ')' : '') + '\n' +
+        (r.problems.length ? '问题：' + r.problems.join('；') : '无'));
+    sumEl.dataset.ok = r.ok ? '1' : '0';
+    log('结果：', JSON.stringify({ ok: r.ok, text: r.text, problems: r.problems }));
+  }
+
+  window.__ASR_TEST__ = {
+    run: run,
+    probeExternal: probeExternal,
+    YuyiASRInfo: function () {
+      return {
+        version: YuyiASR.version,
+        engine: YuyiASR.engine,
+        env: YuyiASR.available(),
+        engineUrl: new URL('vosk.js', new URL(BASE_URL, location.href)).href,
+        modelUrl: new URL('model.tar.gz', new URL(BASE_URL, location.href)).href
+      };
+    }
+  };
+
+  if (QS.get('manual') !== '1') {
+    window.__ASR_DONE__ = false;
+    run().catch(function (e) { log('顶层异常：' + e); });
+  } else {
+    say('手动模式（?manual=1）：在控制台调用 __ASR_TEST__.run()');
+  }
+})();
+</script>
+</body>
+</html>

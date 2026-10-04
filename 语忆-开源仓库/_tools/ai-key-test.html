@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>语忆 · AI Key 实测</title>
+<style>
+  body{margin:0;background:#111;color:#eee;font:19px/1.6 -apple-system,"Microsoft YaHei",sans-serif;padding:18px 16px 40px}
+  h1{font-size:23px;margin:0 0 6px}
+  .sub{color:#9a9a9a;font-size:15px;margin-bottom:14px}
+  .row{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border:1px solid #2a2a2a;border-radius:12px;margin-bottom:9px;background:#191919}
+  .k{flex:0 0 104px;color:#9a9a9a;font-size:16px}
+  .v{flex:1 1 auto;font-weight:700;font-size:17px;word-break:break-all}
+  .ok{color:#5fd08a}.bad{color:#ff7b72}.warn{color:#ffc66d}
+  button{font:inherit;font-weight:700;padding:15px 18px;border-radius:12px;border:0;background:#2A4A40;color:#fff;width:100%;margin-top:8px}
+  #log{font-size:15px;color:#bdbdbd;white-space:pre-wrap;background:#0c0c0c;border-radius:10px;padding:10px;max-height:38vh;overflow:auto;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>AI Key 实测</h1>
+<p class="sub">用你手机上已保存的配置发起<b>真实请求</b>，判断 Key 到底能不能用。<b>本页不会显示完整 Key。</b></p>
+
+<div class="row"><span class="k">读到配置</span><span class="v" id="cfg">…</span></div>
+<div class="row"><span class="k">服务商</span><span class="v" id="prov">…</span></div>
+<div class="row"><span class="k">接口地址</span><span class="v" id="base">…</span></div>
+<div class="row"><span class="k">模型</span><span class="v" id="model">…</span></div>
+<div class="row"><span class="k">Key（掩码）</span><span class="v" id="key">…</span></div>
+<div class="row"><span class="k">① /models</span><span class="v" id="r1">未测</span></div>
+<div class="row"><span class="k">② 真实总结</span><span class="v" id="r2">未测</span></div>
+<div class="row"><span class="k">结论</span><span class="v" id="verdict">未测</span></div>
+
+<button id="run" type="button">开始实测</button>
+<div id="log">（日志）</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var logEl = $("log"), lines = [];
+  function log(s){ lines.unshift(s); logEl.textContent = lines.slice(0,50).join("\n"); }
+  function set(id, t, c){ var e=$(id); e.textContent=t; e.className="v "+(c||""); }
+
+  var cfg = null;
+  try {
+    var raw = localStorage.getItem("yuyi.ai.config");
+    cfg = raw ? JSON.parse(raw) : null;
+  } catch (e){ log("读 localStorage 失败：" + e.message); }
+
+  var sum = cfg && cfg.sum ? cfg.sum : null;
+  if (!sum || !sum.base || !sum.key){
+    set("cfg", "没读到已保存的 Key", "bad");
+    set("verdict", "请先在应用里「我的 → AI 接口配置」填好并保存", "bad");
+    log("localStorage 里没有 yuyi.ai.config.sum.base / .key");
+    return;
+  }
+  var masked = sum.key.length > 9 ? (sum.key.slice(0,5) + "…" + sum.key.slice(-4)) : "（太短）";
+  set("cfg", "已读到", "ok");
+  set("prov", sum.provider || "(未记服务商)", "");
+  set("base", sum.base, "");
+  set("model", sum.model || "(未记模型)", "");
+  set("key", masked + "  长度 " + sum.key.length, "ok");
+  log("配置来源：本机 localStorage（与你应用里的是同一份）");
+
+  $("run").addEventListener("click", async function(){
+    set("r1","测试中…","warn"); set("r2","测试中…","warn"); set("verdict","测试中…","warn");
+    var auth = { "Authorization": "Bearer " + sum.key };
+
+    /* ① 探 /models：最小请求，判断 Key 与网络是否通 */
+    try {
+      var t0 = Date.now();
+      var r = await fetch(sum.base + "/models", { headers: auth });
+      var ms = Date.now() - t0;
+      if (r.ok){
+        var n = ""; try { var j = await r.json(); if (Array.isArray(j.data)) n = "，模型 " + j.data.length + " 个"; } catch(e){}
+        set("r1", "✅ " + r.status + "（" + ms + "ms" + n + "）", "ok");
+        log("① /models → HTTP " + r.status + " " + ms + "ms");
+      } else {
+        set("r1", "❌ HTTP " + r.status + "（" + ms + "ms）→ Key 或地址不对", "bad");
+        log("① /models → HTTP " + r.status);
+      }
+    } catch (e){
+      set("r1", "❌ 请求没发出去：" + e.name, "bad");
+      log("① /models 抛错 name=" + e.name + " msg=" + e.message);
+      log("→ 若 name 是 TypeError，几乎一定是【CORS】：服务商不允许网页直连。这不是 Key 错。");
+    }
+
+    /* ② 真的发一次总结请求 */
+    try {
+      var t1 = Date.now();
+      var r2 = await fetch(sum.base + "/chat/completions", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, auth),
+        body: JSON.stringify({
+          model: sum.model || "deepseek-chat",
+          messages: [{ role: "user", content: "请用一句中文回答：测试成功。" }],
+          max_tokens: 32
+        })
+      });
+      var ms2 = Date.now() - t1;
+      if (r2.ok){
+        var j2 = await r2.json();
+        var txt = j2 && j2.choices && j2.choices[0] && j2.choices[0].message && j2.choices[0].message.content;
+        set("r2", txt ? ("✅ 返回：" + String(txt).trim().slice(0,30)) : "⚠ 200 但没解析出正文", txt ? "ok" : "warn");
+        log("② /chat/completions → HTTP 200 " + ms2 + "ms；正文：" + String(txt||"").slice(0,60));
+      } else {
+        var body = ""; try { body = (await r2.text()).slice(0,90); } catch(e){}
+        set("r2", "❌ HTTP " + r2.status + "（" + ms2 + "ms）", "bad");
+        log("② /chat/completions → HTTP " + r2.status + " body=" + body);
+      }
+    } catch (e){
+      set("r2", "❌ 请求没发出去：" + e.name, "bad");
+      log("② /chat/completions 抛错 name=" + e.name + " msg=" + e.message);
+    }
+
+    var a = $("r1").textContent, b = $("r2").textContent;
+    if (a.indexOf("✅") === 0 && b.indexOf("✅") === 0){
+      set("verdict", "Key 可用，AI 总结在手机上能跑通", "ok");
+    } else if (a.indexOf("请求没发出去") >= 0 || b.indexOf("请求没发出去") >= 0){
+      set("verdict", "被浏览器拦住了（多半是 CORS），不是你的 Key 错 —— 需要走本机代理", "bad");
+    } else {
+      set("verdict", "Key 或地址/模型不对，看上面两条的具体状态码", "bad");
+    }
+  });
+})();
+</script>
+</body>
+</html>

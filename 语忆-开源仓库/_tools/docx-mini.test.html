@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docx-mini.js 手工验收页（零依赖 · 离线可用）</title>
+<style>
+  :root { --fg:#1c1c1e; --muted:#6b6b70; --line:#e3e3e6; --accent:#2f6fed; --bg:#fafafb; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px 18px 60px; background:var(--bg); color:var(--fg);
+         font:15px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 21px; margin: 0 0 6px; }
+  p.sub { color:var(--muted); margin:0 0 20px; font-size:13.5px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  textarea, input[type=text], input[type=number] {
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    font:14px/1.6 ui-monospace, Consolas, "Microsoft YaHei", monospace; color:var(--fg); background:#fff; }
+  textarea { min-height: 240px; resize: vertical; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .row > div { flex:1 1 200px; }
+  .hint { font-size:12.5px; color:var(--muted); margin-top:6px; }
+  code { background:#f2f2f5; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  button { appearance:none; border:1px solid var(--line); background:#fff; color:var(--fg);
+           border-radius:9px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button:active { transform: translateY(1px); }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  pre { background:#0f1115; color:#d7e0ea; padding:14px; border-radius:10px; overflow:auto;
+        font-size:12.5px; line-height:1.6; margin:14px 0 0; }
+  .ok { color:#137333; font-weight:700; }
+  .bad { color:#b3261e; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>docx-mini.js 手工验收页</h1>
+  <p class="sub">
+    零依赖、离线可用。这个页面只做一件事：把你写的段落丢给 <code>docx-mini.js</code>，
+    用 <code>Blob</code> + <code>URL.createObjectURL</code> 真的下载一个 .docx，方便人工用 Word / WPS 打开看。
+    自动化验收在 <code>verify-docx-mini.py</code>（python-docx 回读）。
+  </p>
+
+  <div class="card">
+    <label for="src">段落（每行一段；<code># </code> 开头 = 大标题，<code>## </code> 开头 = 小标题，其余 = 正文）</label>
+    <textarea id="src"># 雨意预览 · 导出验证文档
+## 第一章 中文长句与标点
+这是一段较长的中文句子，用来确认中文、全角标点（，。！？；：、「」《》——……）、数字 2026 与英文 mixed English 都不乱码。
+需要转义的字符：&amp; &lt; &gt; " ' 以及 a&amp;b &lt;c&gt;。
+空行下面会出现一个空段落：
+
+盲文点字 ⠿⠁⠃⠉ 与 emoji 🙂 也能原样写出。
+制表符	与段落内换行
+在这里（这一行属于同一段）。
+## 结尾
+最后一段。</textarea>
+    <div class="hint">提示：用 <code>#</code> / <code>##</code> 控制标题样式；直接回车换行 = 新段落。</div>
+
+    <div class="row" style="margin-top:14px;">
+      <div>
+        <label for="title">文档标题 opts.title（留空则不加标题段）</label>
+        <input type="text" id="title" value="雨意预览 · 导出验证文档">
+      </div>
+      <div>
+        <label for="font">字体 opts.fontFamily</label>
+        <input type="text" id="font" value="Microsoft YaHei">
+      </div>
+      <div>
+        <label for="size">字号 opts.fontSize（磅）</label>
+        <input type="number" id="size" value="10.5" step="0.5" min="1" max="200">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="go" type="button">生成并下载 .docx</button>
+      <button id="selftest" type="button">跑一遍内置自检</button>
+      <button id="reset" type="button">恢复示例文本</button>
+    </div>
+    <pre id="log">等待操作……</pre>
+  </div>
+</div>
+
+<script src="docx-mini.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $("log");
+  var SAMPLE = $("src").value;
+
+  function log(msg) { logEl.textContent = (logEl.textContent === "等待操作……" ? "" : logEl.textContent + "\n") + msg; }
+  function reset() { logEl.textContent = "等待操作……"; }
+
+  function parseParagraphs(text) {
+    return text.replace(/\r\n?/g, "\n").split("\n").map(function (line) {
+      if (/^##\s+/.test(line)) return { text: line.replace(/^##\s+/, ""), style: "heading" };
+      if (/^#\s+/.test(line))  return { text: line.replace(/^#\s+/, ""),  style: "title" };
+      return { text: line, style: "normal" };
+    });
+  }
+
+  function options() {
+    var o = {};
+    var t = $("title").value.trim();
+    var f = $("font").value.trim();
+    var s = parseFloat($("size").value);
+    if (t) o.title = t;
+    if (f) o.fontFamily = f;
+    if (isFinite(s) && s > 0) o.fontSize = s;
+    return o;
+  }
+
+  $("reset").onclick = function () { $("src").value = SAMPLE; reset(); };
+
+  $("go").onclick = function () {
+    reset();
+    if (!window.DocxMini || typeof window.DocxMini.build !== "function") {
+      log("✗ 没找到 window.DocxMini —— 确认 docx-mini.js 和本页面在同一个目录下。");
+      return;
+    }
+    var paragraphs = parseParagraphs($("src").value);
+    var opts = options();
+    log("段落数：" + paragraphs.length + "，opts=" + JSON.stringify(opts));
+    window.DocxMini.build(paragraphs, opts).then(function (blob) {
+      log("✓ build() 返回 " + (blob instanceof Blob ? "Blob" : typeof blob)
+          + "，大小 " + blob.size + " 字节，MIME=" + blob.type);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "docx-mini-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".docx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
+      log("→ 已触发下载：" + a.download + "（下载后请用 Word / WPS 打开确认）");
+    }).catch(function (err) {
+      log("✗ build() 失败：" + (err && err.message ? err.message : String(err)));
+    });
+  };
+
+  $("selftest").onclick = function () {
+    reset();
+    if (!window.DocxMini) { log("✗ 没找到 window.DocxMini"); return; }
+    var cases = [
+      { name: "普通中文多段", paragraphs: [{ text: "第一段中文。", style: "normal" }, { text: "第二段中文。", style: "normal" }] },
+      { name: "标题+正文+空段", paragraphs: [{ text: "标题", style: "title" }, { text: "", style: "normal" }, { text: "正文", style: "heading" }] },
+      { name: "转义字符", paragraphs: [{ text: "& < > \" ' &amp; &lt;", style: "normal" }] },
+      { name: "空数组", paragraphs: [] },
+      { name: "纯字符串", paragraphs: ["字符串段落也算一段"] }
+    ];
+    var chain = Promise.resolve();
+    cases.forEach(function (c) {
+      chain = chain.then(function () {
+        return window.DocxMini.buildBytes(c.paragraphs, {}).then(function (bytes) {
+          var head = String.fromCharCode(bytes[0], bytes[1]);
+          var ok = bytes instanceof Uint8Array && bytes.length > 0 && head === "PK";
+          log((ok ? "✓ " : "✗ ") + c.name + "：Uint8Array=" + (bytes instanceof Uint8Array)
+              + "，字节 " + bytes.length + "，文件头 " + JSON.stringify(head));
+        });
+      });
+    });
+    chain.then(function () {
+      return window.DocxMini.buildBytes(12345, {}).then(function () {
+        log("✗ 非数组入参居然没报错（应该 reject）");
+      }, function (e) {
+        log("✓ 非数组入参正确 reject：" + e.message);
+      });
+    }).then(function () {
+      log("✓ 自检结束。真正的内容级验收请跑 verify-docx-mini.py。");
+    }).catch(function (e) {
+      log("✗ 自检出错：" + (e && e.message ? e.message : String(e)));
+    });
+  };
+})();
+</script>
+</body>
+</html>
